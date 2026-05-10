@@ -1,0 +1,127 @@
+<div class="management-layout">
+
+	<!-- Left: Tree View -->
+	<div class="management-tree">
+		<div class="mb-2">
+			<strong><i class="bi bi-diagram-3"></i> Plugins</strong>
+		</div>
+
+		<div ng-if="Loading" class="text-center mt-3">
+			<div class="spinner-border spinner-border-sm text-primary"></div>
+		</div>
+
+		<tree-view
+			ng-if="!Loading"
+			data="TreeData"
+			on-select="OnTreeSelect( node )">
+		</tree-view>
+	</div>
+
+	<!-- Right: Editor -->
+	<div class="management-editor">
+
+		<!-- Toolbar -->
+		<div class="d-flex gap-2 mb-3" ng-if="SelectedPlugin">
+			<button class="btn btn-sm btn-primary" ng-click="NewEntity()"
+				ng-if="PluginInfo && PluginInfo.HasEntities" title="New entity">
+				<i class="bi bi-plus-lg"></i> New {{ SelectedPlugin }}
+			</button>
+			<button class="btn btn-sm btn-primary" ng-click="Save()" ng-disabled="Saving"
+				ng-if="SelectedEntity || IsNew || IsPluginConfig" title="Save">
+				<i class="bi bi-floppy"></i> Save
+			</button>
+			<button class="btn btn-sm btn-outline-secondary" ng-click="Delete()"
+				ng-if="SelectedEntity && !IsNew" title="Delete entity">
+				<i class="bi bi-trash"></i> Delete
+			</button>
+			<span class="ms-auto text-muted" ng-if="SelectedEntity">
+				{{ SelectedPlugin }} / {{ SelectedEntity }}
+			</span>
+			<span class="ms-auto text-muted" ng-if="IsNew">
+				{{ SelectedPlugin }} / <em>new</em>
+			</span>
+		</div>
+
+		<!-- Alerts -->
+		<div class="alert alert-danger alert-dismissible" ng-if="Error">
+			{{ Error }}
+			<button type="button" class="btn-close" ng-click="Error = ''"></button>
+		</div>
+		<div class="alert alert-success alert-dismissible" ng-if="Success">
+			{{ Success }}
+			<button type="button" class="btn-close" ng-click="Success = ''"></button>
+		</div>
+
+		<!-- No selection -->
+		<div ng-if="!SelectedPlugin" class="text-center text-muted mt-5">
+			<i class="bi bi-arrow-left" style="font-size: 2em;"></i>
+			<p class="mt-2">Select a plugin or entity from the tree.</p>
+		</div>
+
+		<!-- Plugin Info Panel (shown when a plugin is selected, no entity) -->
+		<div ng-if="PluginInfo && !SelectedEntity && !IsNew" class="plugin-info">
+
+			<h5><i class="bi" ng-class="PluginInfo.HasEntities ? 'bi-puzzle' : 'bi-gear'"></i> {{ PluginInfo.Name }}</h5>
+			<p class="plugin-description" ng-if="PluginInfo.Description">{{ PluginInfo.Description }}</p>
+			<p class="plugin-description" ng-if="!PluginInfo.Description"><em>No description.</em></p>
+
+			<!-- Tools -->
+			<div class="card mb-3" ng-if="PluginInfo.Tools.length > 0">
+				<div class="card-header">
+					<i class="bi bi-wrench"></i> Tools ({{ PluginInfo.Tools.length }})
+				</div>
+				<div class="card-body p-0">
+					<ul class="tool-list mb-0">
+						<li ng-repeat="tool in PluginInfo.Tools" class="px-3">
+							<span class="tool-name">{{ tool.ToolName }}</span>
+							<span class="tool-desc" ng-if="tool.Description">{{ tool.Description }}</span>
+						</li>
+					</ul>
+				</div>
+			</div>
+
+			<!-- Plugin Config -->
+			<div class="card" ng-if="IsPluginConfig && Schema">
+				<div class="card-header">
+					<i class="bi bi-sliders"></i> Plugin Configuration
+				</div>
+				<div class="card-body">
+					<schema-editor schema="Schema" model="Model"></schema-editor>
+				</div>
+			</div>
+
+			<div class="card" ng-if="!IsPluginConfig || !Schema">
+				<div class="card-header">
+					<i class="bi bi-sliders"></i> Plugin Configuration
+				</div>
+				<div class="card-body text-muted">
+					<em>No settings for {{ PluginInfo.Name }}.</em>
+				</div>
+			</div>
+
+		</div>
+
+		<!-- New entity name -->
+		<div class="mb-3" ng-if="IsNew">
+			<label class="form-label fw-bold">Entity Name</label>
+			<input type="text" class="form-control" ng-model="NewEntityName" placeholder="Enter entity name">
+		</div>
+
+		<!-- Schema Editor (entity selected or new entity) -->
+		<div ng-if="Schema && ( SelectedEntity || IsNew )">
+			<schema-editor schema="Schema" model="Model"></schema-editor>
+		</div>
+
+		<!-- Fallback: raw JSON editor when no schema -->
+		<div ng-if="!Schema && ( SelectedEntity || IsNew )">
+			<label class="form-label fw-bold">Settings (JSON)</label>
+			<textarea class="form-control monospace" rows="16"
+				ng-model="RawJson"
+				ng-init="RawJson = ( Model | json )"
+				ng-change="try { Model = JSON.parse( RawJson ); } catch(e) {}">
+			</textarea>
+		</div>
+
+	</div>
+
+</div>

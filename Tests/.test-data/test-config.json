@@ -1,0 +1,11 @@
+{
+	"RegistryPath": "Tests/.test-data/Registry",
+	"HiveRoot": "Tests/.test-data/Data",
+	"Username": "testuser",
+	"Password": "test123",
+	"ChatLlm": "test-llm",
+	"LlmPlatform": "ollama",
+	"LlmModel": "kimi-k2.5:cloud",
+	"LlmTemperature": 0,
+	"LlmContextSize": 8192
+}

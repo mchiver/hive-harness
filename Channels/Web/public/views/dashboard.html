@@ -1,0 +1,82 @@
+<div class="container mt-3">
+
+	<!-- Loading -->
+	<div ng-if="Loading" class="text-center mt-5">
+		<div class="spinner-border text-primary" role="status"></div>
+		<p class="mt-2 text-muted">Loading dashboard...</p>
+	</div>
+
+	<!-- Error -->
+	<div class="alert alert-danger" ng-if="Error">{{ Error }}</div>
+
+	<div ng-if="!Loading && !Error">
+
+		<!-- System Info -->
+		<div class="row mb-4">
+			<div class="col-md-4">
+				<div class="card dashboard-card">
+					<div class="card-body text-center">
+						<i class="bi bi-hexagon-fill" style="font-size: 2em; color: var( --accent );"></i>
+						<h5 class="mt-2">{{ SystemInfo.HiveName || 'Hive' }}</h5>
+						<p class="text-muted mb-0">{{ SystemInfo.HivePath || '' }}</p>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="card dashboard-card">
+					<div class="card-body text-center">
+						<div class="stat-value">{{ Plugins.length }}</div>
+						<p class="text-muted mb-0">Plugins Loaded</p>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="card dashboard-card">
+					<div class="card-body text-center">
+						<div class="stat-value">{{ SystemInfo.ToolCount || 0 }}</div>
+						<p class="text-muted mb-0">Tools Available</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Plugins Overview -->
+		<div class="card">
+			<div class="card-header">
+				<i class="bi bi-puzzle"></i> Plugins
+			</div>
+			<div class="card-body p-0">
+				<table class="table table-hover mb-0">
+					<thead>
+						<tr>
+							<th>Plugin</th>
+							<th>Entities</th>
+							<th>Tools</th>
+							<th>Description</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="plugin in Plugins">
+							<td>
+								<i class="bi" ng-class="GetPluginIcon( plugin.PluginName )"></i>
+								{{ plugin.PluginName }}
+							</td>
+							<td>
+								<span class="badge bg-info">{{ plugin.EntityCount || 0 }}</span>
+							</td>
+							<td>
+								<span class="badge bg-info">{{ plugin.ToolCount || 0 }}</span>
+							</td>
+							<td class="text-muted">{{ plugin.Description || '' }}</td>
+						</tr>
+						<tr ng-if="Plugins.length === 0">
+							<td colspan="4" class="text-center text-muted">No plugins loaded.</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	</div>
+
+</div>

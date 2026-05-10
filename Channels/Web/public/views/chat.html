@@ -1,0 +1,87 @@
+<div class="chat-container">
+
+	<!-- Top Bar: Conversation selector only -->
+	<div class="chat-status-bar">
+		<select class="form-select form-select-sm" style="width: auto;"
+			ng-model="SelectedConversation"
+			ng-change="SelectConversation( SelectedConversation )">
+			<option value="" disabled>Select conversation...</option>
+			<option ng-repeat="conv in Conversations" value="{{ conv.ConversationName }}">{{ conv.ConversationName }}</option>
+		</select>
+
+		<button class="btn btn-sm btn-outline-secondary" ng-click="CreateConversation()" title="New conversation">
+			<i class="bi bi-plus-lg"></i>
+		</button>
+	</div>
+
+	<!-- Error -->
+	<div class="alert alert-danger alert-dismissible mt-2" ng-if="Error">
+		{{ Error }}
+		<button type="button" class="btn-close" ng-click="Error = ''"></button>
+	</div>
+
+	<!-- Messages -->
+	<div class="chat-messages">
+
+		<div ng-if="Loading" class="text-center mt-3">
+			<div class="spinner-border spinner-border-sm text-primary"></div>
+		</div>
+
+		<div ng-if="!Loading && Messages.length === 0" class="text-center text-muted mt-5">
+			<i class="bi bi-chat" style="font-size: 2em;"></i>
+			<p class="mt-2">No messages yet. Start a conversation!</p>
+		</div>
+
+		<chat-message
+			ng-repeat="msg in Messages"
+			message="msg">
+		</chat-message>
+
+	</div>
+
+	<!-- Bottom: Input + Status -->
+	<div class="chat-bottom-bar">
+
+		<!-- Status line -->
+		<div class="chat-status-line" ng-if="Sending || StatusText">
+			<span class="status-icon">
+				<i class="bi bi-arrow-repeat spin" ng-if="Sending"></i>
+				<i class="bi bi-check-lg text-success" ng-if="!Sending && StatusText === 'Done'"></i>
+			</span>
+			<span class="status-text">{{ StatusText }}</span>
+			<span class="status-timer" ng-if="ElapsedTime">{{ ElapsedTime }}</span>
+		</div>
+
+		<!-- Input row -->
+		<div class="chat-input-bar">
+			<!-- Autocomplete dropdown -->
+			<div class="autocomplete-dropdown" ng-if="ShowSuggestions">
+				<div class="autocomplete-item"
+					ng-repeat="suggestion in Suggestions"
+					ng-click="SelectSuggestion( suggestion )">
+					{{ suggestion }}
+				</div>
+			</div>
+
+			<!-- Connection dot -->
+			<span class="connection-dot" ng-class="Connected ? 'connected' : 'disconnected'"
+				title="{{ Connected ? 'Connected' : 'Disconnected' }}"></span>
+
+			<input type="text"
+				class="form-control"
+				ng-model="InputText"
+				ng-keypress="OnInputKeyPress( $event )"
+				ng-change="OnInputChange()"
+				placeholder="Type a message..."
+				ng-disabled="Sending || !SelectedConversation">
+
+			<button class="btn btn-primary"
+				ng-click="Send()"
+				ng-disabled="Sending || !InputText || !SelectedConversation">
+				<i class="bi bi-send"></i>
+			</button>
+		</div>
+
+	</div>
+
+</div>

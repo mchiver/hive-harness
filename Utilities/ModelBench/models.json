@@ -1,0 +1,114 @@
+[
+	{
+		"Platform": "ollama",
+		"ModelName": "kimi-k2.5:cloud",
+		"ModelParameters": 32,
+		"ModelTemperature": 0,
+		"ContextSize": 262144,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "minimax-m2.7:cloud",
+		"ModelParameters": 40,
+		"ModelTemperature": 0,
+		"ContextSize": 204800,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "glm-5.1:cloud",
+		"ModelParameters": 40,
+		"ModelTemperature": 0,
+		"ContextSize": 202752,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "qwen3.5:4b",
+		"ModelParameters": 4,
+		"ModelTemperature": 0,
+		"ContextSize": 262144,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "qwen3.5:397b-cloud",
+		"ModelParameters": 397,
+		"ModelTemperature": 0,
+		"ContextSize": 262144,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "qwen3-coder:480b-cloud",
+		"ModelParameters": 480,
+		"ModelTemperature": 0,
+		"ContextSize": 262144,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "qwen3-coder-next:cloud",
+		"ModelParameters": 3,
+		"ModelTemperature": 0,
+		"ContextSize": 262144,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "gemma4:31b-cloud",
+		"ModelParameters": 31,
+		"ModelTemperature": 0,
+		"ContextSize": 262144,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "gemma4:e2b",
+		"ModelParameters": 2,
+		"ModelTemperature": 0,
+		"ContextSize": 131072,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "gemma4:e4b",
+		"ModelParameters": 4,
+		"ModelTemperature": 0,
+		"ContextSize": 131072,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "nemotron-3-super:cloud",
+		"ModelParameters": 120,
+		"ModelTemperature": 0,
+		"ContextSize": 262144,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "nemotron-3-nano:4b",
+		"ModelParameters": 4,
+		"ModelTemperature": 0,
+		"ContextSize": 262144,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "nemotron-3-nano:30b-cloud",
+		"ModelParameters": 3,
+		"ModelTemperature": 0,
+		"ContextSize": 1000000,
+		"CanEmbed": false
+	},
+	{
+		"Platform": "ollama",
+		"ModelName": "lfm2.5-thinking",
+		"ModelParameters": 1.2,
+		"ModelTemperature": 0,
+		"ContextSize": 128000,
+		"CanEmbed": false
+	}
+]

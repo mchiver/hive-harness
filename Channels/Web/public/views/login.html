@@ -1,0 +1,42 @@
+<div class="login-container">
+	<div class="card">
+		<div class="card-header">
+			<i class="bi bi-hexagon-fill"></i> Hive Login
+		</div>
+		<div class="card-body">
+
+			<div class="alert alert-danger" ng-if="Error">
+				{{ Error }}
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label">Username</label>
+				<input type="text"
+					class="form-control"
+					ng-model="Username"
+					ng-keypress="OnKeyPress( $event )"
+					placeholder="Enter username"
+					autofocus>
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label">Password</label>
+				<input type="password"
+					class="form-control"
+					ng-model="Password"
+					ng-keypress="OnKeyPress( $event )"
+					placeholder="Enter password">
+			</div>
+
+			<button class="btn btn-primary w-100"
+				ng-click="Login()"
+				ng-disabled="Loading">
+				<span ng-if="!Loading">Login</span>
+				<span ng-if="Loading">
+					<i class="bi bi-arrow-repeat spin"></i> Logging in...
+				</span>
+			</button>
+
+		</div>
+	</div>
+</div>

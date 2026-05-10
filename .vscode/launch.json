@@ -1,0 +1,60 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Cli Channel",
+			"runtimeExecutable": "node",
+			"runtimeArgs": [],
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"program": "${workspaceFolder}\\Channels\\Cli\\Cli.js",
+			"args": [
+				"--path",
+				"${workspaceFolder}\\Tests\\.test-data\\Data",
+				"--registry",
+				"${workspaceFolder}\\Tests\\.test-data\\Registry",
+				"Why is the sky blue?"
+			],
+			"outputCapture": "std",
+			"internalConsoleOptions": "openOnSessionStart"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Test Models",
+			"runtimeExecutable": "node",
+			"runtimeArgs": [],
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"program": "${workspaceFolder}\\Tests\\ModelTests\\Model-Capabilities.test.js",
+			"args": [
+				"--test"
+			],
+			"outputCapture": "std",
+			"internalConsoleOptions": "openOnSessionStart"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Test 301",
+			"runtimeExecutable": "node",
+			"runtimeArgs": [],
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"program": "${workspaceFolder}\\Tests\\301-Conversation-Chat-Live.test.js",
+			"args": [
+				"--test",
+			],
+			"outputCapture": "std",
+			"internalConsoleOptions": "openOnSessionStart"
+		},
+	]
+}
