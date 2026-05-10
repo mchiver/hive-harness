@@ -1,7 +1,7 @@
 {
   "name": "@mchiver/hive-harness",
   "description": "Per-folder data isolation, user authentication, and tool execution framework for AI LLMs",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "Hive.js",
   "bin": {
     "hive": "./Channels/Cli/Cli.js",
