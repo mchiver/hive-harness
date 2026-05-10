@@ -1,30 +1,65 @@
 {
-  "name": "@mchiver/hive-harness",
-  "description": "Per-folder data isolation, user authentication, and tool execution framework for AI LLMs",
-  "version": "0.1.0",
-  "main": "Hive.js",
-  "bin": {
-    "hive": "./Channels/Cli/Cli.js",
-    "hive-web": "./Channels/Web/Web.js",
-    "hive-discord": "./Channels/Discord/Discord.js"
-  },
-  "scripts": {
-    "test": "node --test --test-concurrency=1 --test-reporter=spec ./Tests/*.test.js",
-    "test-parallel": "node --test --test-reporter=spec ./Tests/*.test.js",
-    "test-bench": "node --test --test-concurrency=1 --test-reporter=spec ./Utilities/ModelBench/tests/**/*.js",
-    "bench": "node Utilities/ModelBench/modelbench.js"
-  },
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "better-sqlite3": "^12.8.0",
-    "blessed": "^0.1.81",
-    "discord.js": "^14.26.2",
-    "express": "^5.2.1",
-    "json5": "^2.2.3",
-    "jsonwebtoken": "^9.0.2",
-    "minimist": "^1.2.8",
-    "moniker": "^0.1.2"
-  }
+	"name": "@mchiver/hive-harness",
+	"description": "Per-folder data isolation, user authentication, and tool execution framework for AI LLMs",
+	"version": "0.1.0",
+	"license": "MIT",
+	"author": "Andre' G. Bowlin <agbowlin@gmail.com>",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/mchiver/hive-harness.git"
+	},
+	"homepage": "https://github.com/mchiver/hive-harness",
+	"bugs": {
+		"url": "https://github.com/mchiver/hive-harness/issues"
+	},
+	"keywords": [
+		"ai",
+		"llm",
+		"agent",
+		"plugin",
+		"tools",
+		"sandbox",
+		"node"
+	],
+	"main": "Source/Hive.js",
+	"bin": {
+		"hive": "./Channels/Cli/Cli.js",
+		"hive-web": "./Channels/Web/Web.js",
+		"hive-discord": "./Channels/Discord/Discord.js"
+	},
+	"files": [
+		"Source/",
+		"Channels/",
+		"Plugins/",
+		"Helpers/",
+		"Apps/",
+		"Tests/",
+		"Docs/",
+		"Utilities/",
+		"readme.md",
+		"license.md"
+	],
+	"scripts": {
+		"test": "node --test --test-concurrency=1 --test-reporter=spec ./Tests/*.test.js",
+		"test-parallel": "node --test --test-reporter=spec ./Tests/*.test.js",
+		"test-bench": "node --test --test-concurrency=1 --test-reporter=spec ./Utilities/ModelBench/tests/**/*.js",
+		"bench": "node Utilities/ModelBench/modelbench.js"
+	},
+	"dependencies": {
+		"bcrypt": "^6.0.0",
+		"better-sqlite3": "^12.8.0",
+		"blessed": "^0.1.81",
+		"discord.js": "^14.26.2",
+		"express": "^5.2.1",
+		"json5": "^2.2.3",
+		"jsonwebtoken": "^9.0.2",
+		"minimist": "^1.2.8",
+		"moniker": "^0.1.2"
+	},
+	"engines": {
+		"node": ">=20.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
 }
