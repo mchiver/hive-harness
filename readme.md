@@ -1,12 +1,12 @@
-# HiveJS
+# @mchiver/hive-harness
 
-HiveJS is a lightweight, plugin-based runtime for Node.js.
+`hive-harness` is a lightweight, plugin-based runtime for Node.js.
 It provides per-folder data isolation, user authentication, and a tool execution framework designed for AI integration.
 
 
 ## What is it?
 
-HiveJS is a small engine with three core concepts:
+`hive-harness` is a small engine with three core concepts:
 
 - **Registry** - A global store of plugin definitions and user accounts. Typically lives at a path like `~/.hives`.
 - **Hive** - A per-folder instance opened against a Registry with user credentials. Each folder gets its own `.hive/` data directory, keeping plugin data isolated between projects.
@@ -15,7 +15,7 @@ HiveJS is a small engine with three core concepts:
 
 ## What is it for?
 
-HiveJS is designed to be the backend for AI agent harnesses.
+`hive-harness` is designed to be the backend for AI agent harnesses.
 Plugins expose structured tools that AI agents can discover, understand, and invoke.
 Each Hive provides a sandboxed, authenticated workspace where agents operate on a specific folder with access to configured plugins.
 
@@ -46,8 +46,8 @@ Data is stored per-Hive in the `.hive/` directory, ensuring complete isolation b
 
 ### Guides
 
-- [Application Developer Guide](Docs/Application-Developers-Guide.md) - How to integrate HiveJS into your application.
-- [Plugin Developer Guide](Docs/Plugin-Developers-Guide.md) - How to build plugins and tools for HiveJS.
+- [Application Developer Guide](Docs/Application-Developers-Guide.md) - How to integrate `hive-harness` into your application.
+- [Plugin Developer Guide](Docs/Plugin-Developers-Guide.md) - How to build plugins and tools for `hive-harness`.
 
 ### References
 
