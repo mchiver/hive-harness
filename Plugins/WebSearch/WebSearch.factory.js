@@ -12,6 +12,7 @@ class Factory
 	{
 		Plugin.Description = 'Web search plugin with multiple search engine support.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [];
 
 		// Plugin-level configuration for API keys
 		Plugin.ConfigSchema = {

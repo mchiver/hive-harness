@@ -14,6 +14,7 @@ class Factory
 	{
 		Plugin.Description = 'Multi-step tool orchestration with variable interpolation.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [];
 
 		// Workflow is an entity-type plugin
 		Plugin.EntitySchema = {

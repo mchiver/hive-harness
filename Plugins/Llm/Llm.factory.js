@@ -14,6 +14,7 @@ class Factory
 	{
 		Plugin.Description = 'LLM chat and embedding via platform adapters.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [];
 
 		// Llm is an entity-type plugin
 		Plugin.EntitySchema = {

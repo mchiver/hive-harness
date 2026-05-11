@@ -13,6 +13,7 @@ class Factory
 	{
 		Plugin.Description = 'Reusable prompt instruction blocks for conversations.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [];
 
 		// Skill is an entity-type plugin
 		Plugin.EntitySchema = {

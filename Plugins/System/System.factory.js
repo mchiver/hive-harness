@@ -11,6 +11,7 @@ class Factory
 	{
 		Plugin.Description = 'Hive introspection and system information.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [];
 
 
 		//---------------------------------------------------------------------

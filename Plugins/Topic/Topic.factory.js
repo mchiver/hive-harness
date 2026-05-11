@@ -16,6 +16,7 @@ class Factory
 	{
 		Plugin.Description = 'Searchable knowledgebase (RAG) per entity.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [ 'Llm' ];
 
 		// Topic is an entity-type plugin
 		Plugin.EntitySchema = {

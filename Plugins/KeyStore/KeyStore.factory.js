@@ -12,6 +12,7 @@ class Factory
 	{
 		Plugin.Description = 'Key-value storage for persistent data.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [];
 
 		// KeyStore is an entity-type plugin
 		Plugin.EntitySchema = {

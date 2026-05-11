@@ -318,6 +318,25 @@ class Registry
 			// Collect plugin
 			plugins[ plugin.PluginName ] = plugin;
 		}
+
+		// Validate dependencies
+		for ( var plugin_name in plugins )
+		{
+			var plugin = plugins[ plugin_name ];
+			if ( !plugin.RequiredPlugins || !Array.isArray( plugin.RequiredPlugins ) )
+			{
+				continue;
+			}
+			for ( var dep_index = 0; dep_index < plugin.RequiredPlugins.length; dep_index++ )
+			{
+				var dep_name = plugin.RequiredPlugins[ dep_index ];
+				if ( !plugins[ dep_name ] )
+				{
+					throw new Error( `Plugin [${plugin_name}] requires missing dependency [${dep_name}].` );
+				}
+			}
+		}
+
 		return plugins;
 	}
 

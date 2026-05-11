@@ -12,6 +12,7 @@ class Factory
 	{
 		Plugin.Description = 'Test utilities: arithmetic, echo, and time tools.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [];
 
 		return Plugin;
 	}

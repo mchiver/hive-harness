@@ -14,6 +14,7 @@ class Factory
 	{
 		Plugin.Description = 'Filesystem tools scoped to the workspace root.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [];
 
 
 		//---------------------------------------------------------------------

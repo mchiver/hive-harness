@@ -12,6 +12,7 @@ class Factory
 	{
 		Plugin.Description = 'SQLite database storage per entity.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [];
 
 		// SqlStore is an entity-type plugin
 		Plugin.EntitySchema = {

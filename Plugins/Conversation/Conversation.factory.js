@@ -15,6 +15,7 @@ class Factory
 	{
 		Plugin.Description = 'AI conversation pipeline with topics, history, and tool calling.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [ 'Topic', 'Llm', 'Skill' ];
 
 		// Plugin-level configuration (loaded from .hive/Conversation/Conversation.plugin.json)
 		Plugin.ConfigSchema = {

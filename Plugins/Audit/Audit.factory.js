@@ -14,6 +14,7 @@ class Factory
 	{
 		Plugin.Description = 'Append-only timestamped event logging.';
 		Plugin.RequiredRole = 'user';
+		Plugin.RequiredPlugins = [];
 
 
 		//---------------------------------------------------------------------
