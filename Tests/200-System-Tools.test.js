@@ -74,7 +74,7 @@ TEST.describe( 'System Tool Tests', function ()
 
 		var system_plugin = result.Result.Plugins.find( function ( p ) { return p.PluginName === 'System'; } );
 		ASSERT.ok( system_plugin, 'System plugin should be in the list' );
-		ASSERT.strictEqual( system_plugin.ToolCount, 5, 'System should have 5 tools' );
+		ASSERT.strictEqual( system_plugin.ToolCount, 8, 'System should have 8 tools' );
 	} );
 
 
@@ -112,7 +112,7 @@ TEST.describe( 'System Tool Tests', function ()
 
 		ASSERT.ok( !result.Error, result.Error );
 		ASSERT.ok( result.Success, 'should succeed' );
-		ASSERT.strictEqual( result.Result.Tools.length, 5, 'System should have 5 tools' );
+		ASSERT.strictEqual( result.Result.Tools.length, 8, 'System should have 8 tools' );
 
 		var tool_names = result.Result.Tools.map( function ( t ) { return t.ToolName; } );
 		ASSERT.ok( tool_names.includes( 'Info' ), 'should include Info' );
@@ -120,6 +120,9 @@ TEST.describe( 'System Tool Tests', function ()
 		ASSERT.ok( tool_names.includes( 'ListTools' ), 'should include ListTools' );
 		ASSERT.ok( tool_names.includes( 'GetPluginDocumentation' ), 'should include GetPluginDocumentation' );
 		ASSERT.ok( tool_names.includes( 'RunTools' ), 'should include RunTools' );
+		ASSERT.ok( tool_names.includes( 'ListAvailablePlugins' ), 'should include ListAvailablePlugins' );
+		ASSERT.ok( tool_names.includes( 'InstallPlugin' ), 'should include InstallPlugin' );
+		ASSERT.ok( tool_names.includes( 'UninstallPlugin' ), 'should include UninstallPlugin' );
 	} );
 
 
@@ -334,7 +337,7 @@ TEST.describe( 'System Tool Tests', function ()
 		ASSERT.ok( !result.Error, result.Error );
 		ASSERT.ok( result.Success, 'should succeed' );
 		ASSERT.ok( result.Result.Results[ 0 ].Success, 'call should succeed' );
-		ASSERT.strictEqual( result.Result.Results[ 0 ].Result.Tools.length, 5, 'System should have 5 tools' );
+		ASSERT.strictEqual( result.Result.Results[ 0 ].Result.Tools.length, 8, 'System should have 8 tools' );
 	} );
 
 
@@ -368,6 +371,173 @@ TEST.describe( 'System Tool Tests', function ()
 
 		ASSERT.ok( !result.Error, result.Error );
 		ASSERT.strictEqual( result.Result.Results.length, 2, 'should have 2 results, ignoring blank lines' );
+	} );
+
+
+	//=================================================================
+	// ListAvailablePlugins
+	//=================================================================
+
+
+	//-----------------------------------------------------------------
+	TEST.it( 'should list available plugins from the catalog', async function ()
+	{
+		var hive = await open_hive();
+
+		var result = await hive.InvokeTool( 'System.ListAvailablePlugins', {} );
+
+		ASSERT.ok( !result.Error, result.Error );
+		ASSERT.ok( result.Success, 'should succeed' );
+		ASSERT.ok( Array.isArray( result.Result.Plugins ), 'Plugins should be an array' );
+
+		var exchange_entry = result.Result.Plugins.find( function ( p ) { return p.PluginName === 'Exchange'; } );
+		if ( exchange_entry )
+		{
+			ASSERT.strictEqual( exchange_entry.PluginUrl, 'https://github.com/mchiver/hive-plugin-exchange.git', 'should have correct URL' );
+			ASSERT.strictEqual( exchange_entry.RequiredRole, 'user', 'should have correct role' );
+		}
+	} );
+
+
+	//-----------------------------------------------------------------
+	TEST.it( 'should mark installed plugins as IsInstalled', async function ()
+	{
+		var hive = await open_hive();
+
+		var result = await hive.InvokeTool( 'System.ListAvailablePlugins', {} );
+
+		ASSERT.ok( !result.Error, result.Error );
+		ASSERT.ok( result.Success, 'should succeed' );
+
+		var system_entry = result.Result.Plugins.find( function ( p ) { return p.PluginName === 'System'; } );
+		if ( system_entry )
+		{
+			ASSERT.strictEqual( system_entry.IsInstalled, true, 'System should be marked installed' );
+		}
+	} );
+
+
+	//=================================================================
+	// InstallPlugin
+	//=================================================================
+
+
+	//-----------------------------------------------------------------
+	TEST.it( 'should install Exchange from local sibling repo in development', async function ()
+	{
+		var hive = await open_hive();
+
+		// Ensure Exchange is not installed in the test registry
+		var exchange_link = PATH.join( TestHive.REGISTRY_PATH, 'Plugins', 'Exchange', 'plugin.link.json' );
+		if ( await hive.Helpers.FileUtils.FileExists( exchange_link ) )
+		{
+			await hive.Helpers.FileUtils.DeleteFolder( PATH.join( TestHive.REGISTRY_PATH, 'Plugins', 'Exchange' ), true );
+		}
+
+		var result = await hive.InvokeTool( 'System.InstallPlugin', {
+			PluginName: 'Exchange',
+		} );
+
+		ASSERT.ok( !result.Error, result.Error );
+		ASSERT.ok( result.Success, 'should succeed' );
+		ASSERT.strictEqual( result.Result.PluginName, 'Exchange', 'should return Exchange' );
+		ASSERT.ok( result.Result.Path, 'should return a path' );
+
+		// Verify the plugin.link.json was created
+		var link_exists = await hive.Helpers.FileUtils.FileExists( exchange_link );
+		ASSERT.ok( link_exists, 'plugin.link.json should exist after install' );
+
+		// Cleanup
+		await hive.Helpers.FileUtils.DeleteFolder( PATH.join( TestHive.REGISTRY_PATH, 'Plugins', 'Exchange' ), true );
+	} );
+
+
+	//-----------------------------------------------------------------
+	TEST.it( 'should fail to install an already-installed plugin', async function ()
+	{
+		var hive = await open_hive();
+
+		// Ensure Exchange is installed first
+		var exchange_folder = PATH.join( TestHive.REGISTRY_PATH, 'Plugins', 'Exchange' );
+		var exchange_link = PATH.join( exchange_folder, 'plugin.link.json' );
+		if ( !await hive.Helpers.FileUtils.FileExists( exchange_link ) )
+		{
+			var install_result = await hive.InvokeTool( 'System.InstallPlugin', {
+				PluginName: 'Exchange',
+			} );
+			ASSERT.ok( install_result.Success, 'precondition: Exchange should install successfully' );
+		}
+
+		var result = await hive.InvokeTool( 'System.InstallPlugin', {
+			PluginName: 'Exchange',
+		} );
+
+		ASSERT.ok( result.Error, 'should return an error' );
+		ASSERT.ok( result.Error.indexOf( 'already installed' ) > -1, 'error should mention already installed' );
+	} );
+
+
+	//-----------------------------------------------------------------
+	TEST.it( 'should fail to install an unknown plugin', async function ()
+	{
+		var hive = await open_hive();
+
+		var result = await hive.InvokeTool( 'System.InstallPlugin', {
+			PluginName: 'NonExistentPlugin',
+		} );
+
+		ASSERT.ok( result.Error, 'should return an error' );
+		ASSERT.ok( result.Error.indexOf( 'not found' ) > -1, 'error should mention not found' );
+	} );
+
+
+	//=================================================================
+	// UninstallPlugin
+	//=================================================================
+
+
+	//-----------------------------------------------------------------
+	TEST.it( 'should uninstall an installed plugin', async function ()
+	{
+		var hive = await open_hive();
+
+		// Install first
+		var exchange_link = PATH.join( TestHive.REGISTRY_PATH, 'Plugins', 'Exchange', 'plugin.link.json' );
+		if ( await hive.Helpers.FileUtils.FileExists( exchange_link ) )
+		{
+			await hive.Helpers.FileUtils.DeleteFolder( PATH.join( TestHive.REGISTRY_PATH, 'Plugins', 'Exchange' ), true );
+		}
+
+		var install_result = await hive.InvokeTool( 'System.InstallPlugin', {
+			PluginName: 'Exchange',
+		} );
+		ASSERT.ok( install_result.Success, 'precondition: install should succeed' );
+
+		// Now uninstall
+		var result = await hive.InvokeTool( 'System.UninstallPlugin', {
+			PluginName: 'Exchange',
+		} );
+
+		ASSERT.ok( !result.Error, result.Error );
+		ASSERT.ok( result.Success, 'should succeed' );
+
+		// Verify the folder is gone
+		var folder_exists = await hive.Helpers.FileUtils.FolderExists( PATH.join( TestHive.REGISTRY_PATH, 'Plugins', 'Exchange' ) );
+		ASSERT.ok( !folder_exists, 'Exchange folder should be removed' );
+	} );
+
+
+	//-----------------------------------------------------------------
+	TEST.it( 'should fail to uninstall a non-existent plugin', async function ()
+	{
+		var hive = await open_hive();
+
+		var result = await hive.InvokeTool( 'System.UninstallPlugin', {
+			PluginName: 'NonExistentPlugin',
+		} );
+
+		ASSERT.ok( result.Error, 'should return an error' );
+		ASSERT.ok( result.Error.indexOf( 'not installed' ) > -1, 'error should mention not installed' );
 	} );
 
 
