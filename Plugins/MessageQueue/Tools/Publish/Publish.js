@@ -46,7 +46,7 @@ module.exports = function ( Tool )
 
 			// Find invoke-mode subscriptions matching this topic
 			var subscriptions = store.Query( "SELECT * FROM subscriptions WHERE mode = 'invoke'" );
-			var matching = Plugin.FindMatchingSubscriptions( subscriptions, Arguments.Topic );
+			var matching = Plugin.FindMatchingSubscriptions( Hive, subscriptions, Arguments.Topic );
 
 			// Close the database before invoking tools (they may open their own connections)
 			store.Close();

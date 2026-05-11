@@ -6,14 +6,10 @@ const FS = require( 'fs' ).promises;
 const HTTP = require( 'http' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const EXPRESS = require( 'express' );
-
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
-const CONVERSATION_DATA_PATH = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'Conversation' );
+const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
+const TestHive = require( './TestHive.js' );
+const CONVERSATION_DATA_PATH = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'Conversation' );
 
 
 //---------------------------------------------------------------------
@@ -59,8 +55,22 @@ TEST.describe( 'Web Channel Tests', function ()
 	TEST.before( async function ()
 	{
 		// Open registry and hive
-		registry = await Registry.Open( TEST_REGISTRY_PATH );
-		hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		registry = await TestHive.EnsureSetup();
+		hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
+
+		// Seed a second registry user used by the concurrent-isolation test.
+		// Shares the testuser password hash so we can log in with TESTUSER_PASSWORD.
+		var FileUtils = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'FileUtils.js' ) );
+		var user2_path = PATH.join( TestHive.REGISTRY_PATH, 'Users', 'user2.json' );
+		if ( !await FileUtils.FileExists( user2_path ) )
+		{
+			await FileUtils.WriteJson( user2_path, {
+				Name: 'Test User 2',
+				Description: 'Second test user for concurrency tests',
+				Role: 'user',
+				PasswordHash: '$2b$10$6rP.rkIRE/zHp9V/fN3pluUbYq/heAsejzRUZyR/1ubHjzvw4lj4q',
+			} );
+		}
 
 		// Build Express app (same as Web.js but without WebChannel class)
 		var Channel = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Channel.js' ) );
@@ -156,7 +166,7 @@ TEST.describe( 'Web Channel Tests', function ()
 			path: '/api/auth/login',
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-		}, { Username: TEST_CONFIG.Username, Password: 'wrongpassword' } );
+		}, { Username: TestHive.TESTUSER_NAME, Password: 'wrongpassword' } );
 		ASSERT.strictEqual( res.Status, 401 );
 	} );
 
@@ -169,11 +179,11 @@ TEST.describe( 'Web Channel Tests', function ()
 			path: '/api/auth/login',
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-		}, { Username: TEST_CONFIG.Username, Password: TEST_CONFIG.Password } );
+		}, { Username: TestHive.TESTUSER_NAME, Password: TestHive.TESTUSER_PASSWORD } );
 
 		ASSERT.strictEqual( res.Status, 200 );
 		ASSERT.ok( res.Json.Token, 'should return a token' );
-		ASSERT.strictEqual( res.Json.UserName, TEST_CONFIG.Username );
+		ASSERT.strictEqual( res.Json.UserName, TestHive.TESTUSER_NAME );
 		ASSERT.ok( res.Json.UserRole, 'should return a role' );
 
 		// Store token for subsequent tests
@@ -192,7 +202,7 @@ TEST.describe( 'Web Channel Tests', function ()
 		} );
 
 		ASSERT.strictEqual( res.Status, 200 );
-		ASSERT.strictEqual( res.Json.UserName, TEST_CONFIG.Username );
+		ASSERT.strictEqual( res.Json.UserName, TestHive.TESTUSER_NAME );
 	} );
 
 
@@ -492,7 +502,7 @@ TEST.describe( 'Web Channel Tests', function ()
 			path: '/api/auth/login',
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-		}, { Username: 'user2', Password: TEST_CONFIG.Password } );
+		}, { Username: 'user2', Password: TestHive.TESTUSER_PASSWORD } );
 
 		ASSERT.strictEqual( user2_login.Status, 200, 'user2 should log in' );
 		var token2 = user2_login.Json.Token;
@@ -505,7 +515,7 @@ TEST.describe( 'Web Channel Tests', function ()
 		for ( var i = 0; i < N; i++ )
 		{
 			var use_token = ( i % 2 === 0 ) ? token : token2;
-			var expected = ( i % 2 === 0 ) ? TEST_CONFIG.Username : 'user2';
+			var expected = ( i % 2 === 0 ) ? TestHive.TESTUSER_NAME : 'user2';
 			calls.push( request( {
 				hostname: '127.0.0.1', port: port,
 				path: '/api/tools/invoke',

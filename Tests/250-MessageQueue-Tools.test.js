@@ -4,15 +4,11 @@ const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const FileUtils = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'FileUtils.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const TestHive = require( './TestHive.js' );
 
 var ENTITY_NAME = 'mq-test-queue';
-var ENTITY_DATA_FOLDER = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'MessageQueue', ENTITY_NAME );
+var ENTITY_DATA_FOLDER = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'MessageQueue', ENTITY_NAME );
 
 
 //---------------------------------------------------------------------
@@ -23,8 +19,7 @@ TEST.describe( 'MessageQueue Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.before( async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 		await hive.InvokeTool( 'MessageQueue.ConfigEntity', { EntityName: ENTITY_NAME } );
 	} );
 
@@ -42,8 +37,7 @@ TEST.describe( 'MessageQueue Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should publish a message and peek it', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var pub_result = await hive.InvokeTool( 'MessageQueue.Publish', {
 			EntityName: ENTITY_NAME,
@@ -68,8 +62,7 @@ TEST.describe( 'MessageQueue Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should consume and ack a message', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Publish
 		await hive.InvokeTool( 'MessageQueue.Publish', {
@@ -109,8 +102,7 @@ TEST.describe( 'MessageQueue Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should subscribe and list subscriptions', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var sub_result = await hive.InvokeTool( 'MessageQueue.Subscribe', {
 			EntityName: ENTITY_NAME,
@@ -135,8 +127,7 @@ TEST.describe( 'MessageQueue Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should unsubscribe', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var sub_result = await hive.InvokeTool( 'MessageQueue.Subscribe', {
 			EntityName: ENTITY_NAME,
@@ -157,8 +148,7 @@ TEST.describe( 'MessageQueue Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should reject and retry a message', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Publish and consume
 		var pub = await hive.InvokeTool( 'MessageQueue.Publish', {
@@ -194,8 +184,7 @@ TEST.describe( 'MessageQueue Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should dead letter a message after max retries', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Publish
 		var pub = await hive.InvokeTool( 'MessageQueue.Publish', {
@@ -232,8 +221,7 @@ TEST.describe( 'MessageQueue Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should invoke-mode subscription auto-dispatch a tool call', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Subscribe with invoke mode — use System.Info as a safe tool to invoke
 		await hive.InvokeTool( 'MessageQueue.Subscribe', {
@@ -258,8 +246,7 @@ TEST.describe( 'MessageQueue Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should purge messages by topic', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Publish some messages
 		await hive.InvokeTool( 'MessageQueue.Publish', { EntityName: ENTITY_NAME, Topic: 'purge.a', Payload: 1 } );

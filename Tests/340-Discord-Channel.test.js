@@ -7,14 +7,10 @@ const CHILD_PROCESS = require( 'child_process' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
 const Channel = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Channel.js' ) );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
+const TestHive = require( './TestHive.js' );
 
 const DISCORD_PATH = PATH.join( __dirname, '..', 'Channels', 'Discord', 'Discord.js' );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
-const CONVERSATION_DATA_PATH = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'Conversation' );
+const CONVERSATION_DATA_PATH = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'Conversation' );
 
 
 //---------------------------------------------------------------------
@@ -56,10 +52,10 @@ async function create_test_channel()
 	var channel = new DiscordChannelStub();
 	channel.Options = {
 		_: [],
-		registry: TEST_REGISTRY_PATH,
-		path: TEST_HIVE_ROOT,
-		username: TEST_CONFIG.Username,
-		password: TEST_CONFIG.Password,
+		registry: TestHive.REGISTRY_PATH,
+		path: TestHive.HIVE_ROOT,
+		username: TestHive.TESTUSER_NAME,
+		password: TestHive.TESTUSER_PASSWORD,
 	};
 	await channel.Initialize();
 	return channel;
@@ -270,7 +266,7 @@ TEST.describe( 'Discord Channel Tests', function ()
 	{
 		var result = await run_discord( [
 			'--registry', PATH.join( __dirname, 'nonexistent-registry' ),
-			'--path', TEST_HIVE_ROOT,
+			'--path', TestHive.HIVE_ROOT,
 			'--username', 'testuser',
 			'System.Info',
 		] );
@@ -283,11 +279,11 @@ TEST.describe( 'Discord Channel Tests', function ()
 	TEST.it( 'should produce dry run report with --test', async function ()
 	{
 		var result = await run_discord( [
-			'--registry', TEST_REGISTRY_PATH,
-			'--path', TEST_HIVE_ROOT,
-			'--username', TEST_CONFIG.Username,
-			'--password', TEST_CONFIG.Password,
-			'--llm', TEST_CONFIG.ChatLlm,
+			'--registry', TestHive.REGISTRY_PATH,
+			'--path', TestHive.HIVE_ROOT,
+			'--username', TestHive.TESTUSER_NAME,
+			'--password', TestHive.TESTUSER_PASSWORD,
+			'--llm', TestHive.Llm.ChatLlm,
 			'--test',
 		] );
 
@@ -295,7 +291,7 @@ TEST.describe( 'Discord Channel Tests', function ()
 		var report = JSON.parse( result.stdout );
 		ASSERT.ok( report.Registry, 'should have Registry path' );
 		ASSERT.ok( report.HivePath, 'should have HivePath' );
-		ASSERT.strictEqual( report.UserName, TEST_CONFIG.Username );
+		ASSERT.strictEqual( report.UserName, TestHive.TESTUSER_NAME );
 		ASSERT.strictEqual( report.ChannelName, 'discord' );
 		ASSERT.ok( report.ConversationName, 'should have ConversationName' );
 		ASSERT.ok( report.Plugins.length > 0, 'should have plugins' );
@@ -308,11 +304,11 @@ TEST.describe( 'Discord Channel Tests', function ()
 	TEST.it( 'should execute one-shot tool invocation', async function ()
 	{
 		var result = await run_discord( [
-			'--registry', TEST_REGISTRY_PATH,
-			'--path', TEST_HIVE_ROOT,
-			'--username', TEST_CONFIG.Username,
-			'--password', TEST_CONFIG.Password,
-			'--llm', TEST_CONFIG.ChatLlm,
+			'--registry', TestHive.REGISTRY_PATH,
+			'--path', TestHive.HIVE_ROOT,
+			'--username', TestHive.TESTUSER_NAME,
+			'--password', TestHive.TESTUSER_PASSWORD,
+			'--llm', TestHive.Llm.ChatLlm,
 			'System.Info',
 		] );
 
@@ -594,7 +590,7 @@ TEST.describe( 'Discord Channel Tests', function ()
 	TEST.it( 'should create a new conversation for a Discord user', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 
 		var fake_user = { id: '111222333', username: 'alice' };
 		await channel.ResolveUserConversation( fake_user );
@@ -610,7 +606,7 @@ TEST.describe( 'Discord Channel Tests', function ()
 	TEST.it( 'should cache and reuse conversation for same user', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 
 		var fake_user = { id: '444555666', username: 'bob' };
 		await channel.ResolveUserConversation( fake_user );
@@ -626,7 +622,7 @@ TEST.describe( 'Discord Channel Tests', function ()
 	TEST.it( 'should create separate conversations for different users', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 
 		var user_a = { id: '100', username: 'user_a' };
 		var user_b = { id: '200', username: 'user_b' };
@@ -647,7 +643,7 @@ TEST.describe( 'Discord Channel Tests', function ()
 	TEST.it( 'should resume existing conversation for known user', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 
 		// Pre-create a conversation for discord:charlie
 		await channel.Hive.InvokeTool( 'Conversation.ConfigEntity', {
@@ -655,7 +651,7 @@ TEST.describe( 'Discord Channel Tests', function ()
 			Settings: {
 				Username: 'discord:charlie',
 				ChannelName: 'discord',
-				ChatLlm: TEST_CONFIG.ChatLlm,
+				ChatLlm: TestHive.Llm.ChatLlm,
 				UsedAt: new Date().toISOString(),
 			},
 		} );
@@ -671,7 +667,7 @@ TEST.describe( 'Discord Channel Tests', function ()
 	TEST.it( 'should set Hive.UserName per user context swap', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 
 		var user_a = { id: '300', username: 'swap_a' };
 		var user_b = { id: '400', username: 'swap_b' };

@@ -5,7 +5,6 @@ SqlStore plugin factory - provides SQLite database storage per entity.
 */
 
 const PATH = require( 'path' );
-const SqlStoreHelper = require( '../../Helpers/SqlStore.js' );
 
 class Factory
 {
@@ -54,7 +53,7 @@ class Factory
 				BusyTimeout: ( entity_config && entity_config.BusyTimeout ) || 5000,
 			};
 
-			var store = new SqlStoreHelper();
+			var store = new Hive.Helpers.SqlStore();
 			store.Open( db_path, options );
 			return store;
 		};

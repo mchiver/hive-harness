@@ -4,15 +4,11 @@ const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const FileUtils = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'FileUtils.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const TestHive = require( './TestHive.js' );
 
 var SED_TEST_DIR = 'sed-test';
-var SED_TEST_ABS = PATH.join( TEST_HIVE_ROOT, SED_TEST_DIR );
+var SED_TEST_ABS = PATH.join( TestHive.HIVE_ROOT, SED_TEST_DIR );
 
 
 //---------------------------------------------------------------------
@@ -50,8 +46,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should substitute single occurrence per line', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var path = await write_test_file( 'sub1.txt', 'hello world\nhello there' );
 		var result = await hive.InvokeTool( 'Workspace.Sed', {
@@ -62,7 +57,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 		ASSERT.ok( result.Success, 'should succeed' );
 		ASSERT.strictEqual( result.Result.Files[ 0 ].Changes, 2 );
 
-		var content = await FileUtils.ReadFile( PATH.join( TEST_HIVE_ROOT, path ) );
+		var content = await FileUtils.ReadFile( PATH.join( TestHive.HIVE_ROOT, path ) );
 		ASSERT.strictEqual( content, 'goodbye world\ngoodbye there' );
 	} );
 
@@ -70,8 +65,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should substitute globally with g flag', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var path = await write_test_file( 'sub2.txt', 'aaa bbb aaa' );
 		var result = await hive.InvokeTool( 'Workspace.Sed', {
@@ -80,7 +74,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 		} );
 
 		ASSERT.ok( result.Success );
-		var content = await FileUtils.ReadFile( PATH.join( TEST_HIVE_ROOT, path ) );
+		var content = await FileUtils.ReadFile( PATH.join( TestHive.HIVE_ROOT, path ) );
 		ASSERT.strictEqual( content, 'ccc bbb ccc' );
 	} );
 
@@ -88,8 +82,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should substitute case-insensitively with i flag', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var path = await write_test_file( 'sub3.txt', 'Hello HELLO hello' );
 		var result = await hive.InvokeTool( 'Workspace.Sed', {
@@ -98,7 +91,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 		} );
 
 		ASSERT.ok( result.Success );
-		var content = await FileUtils.ReadFile( PATH.join( TEST_HIVE_ROOT, path ) );
+		var content = await FileUtils.ReadFile( PATH.join( TestHive.HIVE_ROOT, path ) );
 		ASSERT.strictEqual( content, 'bye bye bye' );
 	} );
 
@@ -106,8 +99,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should substitute with alternate delimiter', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var path = await write_test_file( 'sub4.txt', 'path/to/file' );
 		var result = await hive.InvokeTool( 'Workspace.Sed', {
@@ -116,7 +108,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 		} );
 
 		ASSERT.ok( result.Success );
-		var content = await FileUtils.ReadFile( PATH.join( TEST_HIVE_ROOT, path ) );
+		var content = await FileUtils.ReadFile( PATH.join( TestHive.HIVE_ROOT, path ) );
 		ASSERT.strictEqual( content, 'new/dir/file' );
 	} );
 
@@ -124,8 +116,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should delete lines matching pattern', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var path = await write_test_file( 'del1.txt', 'keep this\n# comment\nkeep this too\n# another comment' );
 		var result = await hive.InvokeTool( 'Workspace.Sed', {
@@ -136,7 +127,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 		ASSERT.ok( result.Success );
 		ASSERT.strictEqual( result.Result.Files[ 0 ].Changes, 2 );
 
-		var content = await FileUtils.ReadFile( PATH.join( TEST_HIVE_ROOT, path ) );
+		var content = await FileUtils.ReadFile( PATH.join( TestHive.HIVE_ROOT, path ) );
 		ASSERT.strictEqual( content, 'keep this\nkeep this too' );
 	} );
 
@@ -144,8 +135,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should insert text before matching lines', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var path = await write_test_file( 'ins1.txt', 'alpha\nbeta\ngamma' );
 		var result = await hive.InvokeTool( 'Workspace.Sed', {
@@ -156,7 +146,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 		ASSERT.ok( result.Success );
 		ASSERT.strictEqual( result.Result.Files[ 0 ].Changes, 1 );
 
-		var content = await FileUtils.ReadFile( PATH.join( TEST_HIVE_ROOT, path ) );
+		var content = await FileUtils.ReadFile( PATH.join( TestHive.HIVE_ROOT, path ) );
 		ASSERT.strictEqual( content, 'alpha\n--- marker ---\nbeta\ngamma' );
 	} );
 
@@ -164,8 +154,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should append text after matching lines', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var path = await write_test_file( 'app1.txt', 'alpha\nbeta\ngamma' );
 		var result = await hive.InvokeTool( 'Workspace.Sed', {
@@ -176,7 +165,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 		ASSERT.ok( result.Success );
 		ASSERT.strictEqual( result.Result.Files[ 0 ].Changes, 1 );
 
-		var content = await FileUtils.ReadFile( PATH.join( TEST_HIVE_ROOT, path ) );
+		var content = await FileUtils.ReadFile( PATH.join( TestHive.HIVE_ROOT, path ) );
 		ASSERT.strictEqual( content, 'alpha\nbeta\n--- marker ---\ngamma' );
 	} );
 
@@ -184,8 +173,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should apply multiple commands in order', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var path = await write_test_file( 'multi.txt', '# header\nfoo bar\nbaz qux' );
 		var result = await hive.InvokeTool( 'Workspace.Sed', {
@@ -194,7 +182,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 		} );
 
 		ASSERT.ok( result.Success );
-		var content = await FileUtils.ReadFile( PATH.join( TEST_HIVE_ROOT, path ) );
+		var content = await FileUtils.ReadFile( PATH.join( TestHive.HIVE_ROOT, path ) );
 		ASSERT.strictEqual( content, 'FOO bar\nbaz qux' );
 	} );
 
@@ -202,8 +190,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should operate on multiple files with Glob option', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		await write_test_file( 'glob_a.txt', 'old value' );
 		await write_test_file( 'glob_b.txt', 'old value' );
@@ -227,8 +214,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should not write to disk in DryRun mode', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var path = await write_test_file( 'dry.txt', 'original content' );
 		var result = await hive.InvokeTool( 'Workspace.Sed', {
@@ -242,7 +228,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 		ASSERT.strictEqual( result.Result.Files[ 0 ].Changes, 1 );
 
 		// File should be unchanged on disk
-		var content = await FileUtils.ReadFile( PATH.join( TEST_HIVE_ROOT, path ) );
+		var content = await FileUtils.ReadFile( PATH.join( TestHive.HIVE_ROOT, path ) );
 		ASSERT.strictEqual( content, 'original content', 'file should be unchanged' );
 	} );
 
@@ -250,8 +236,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should reject paths outside workspace', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'Workspace.Sed', {
 			Command: 's/a/b/',
@@ -265,8 +250,7 @@ TEST.describe( 'Workspace.Sed Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should report zero changes when no match', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var path = await write_test_file( 'nomatch.txt', 'nothing to change here' );
 		var result = await hive.InvokeTool( 'Workspace.Sed', {

@@ -2,13 +2,8 @@
 const TEST = require( 'node:test' );
 const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
+const TestHive = require( './TestHive.js' );
 
-const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
 
 
 //---------------------------------------------------------------------
@@ -19,8 +14,7 @@ TEST.describe( 'Llm Plugin Tests', function ()
 	//-----------------------------------------------------------------
 	async function open_hive()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 		return hive;
 	}
 
@@ -76,13 +70,13 @@ TEST.describe( 'Llm Plugin Tests', function ()
 		var hive = await open_hive();
 
 		var result = await hive.InvokeTool( 'Llm.ConfigEntity', {
-			EntityName: TEST_CONFIG.ChatLlm,
+			EntityName: TestHive.Llm.ChatLlm,
 			Settings: {
 				Description: 'Test LLM entity',
-				Platform: TEST_CONFIG.LlmPlatform,
-				ModelName: TEST_CONFIG.LlmModel,
-				ModelTemperature: TEST_CONFIG.LlmTemperature,
-				ContextSize: TEST_CONFIG.LlmContextSize,
+				Platform: TestHive.Llm.Platform,
+				ModelName: TestHive.Llm.ModelName,
+				ModelTemperature: TestHive.Llm.ModelTemperature,
+				ContextSize: TestHive.Llm.ContextSize,
 				CanEmbed: false,
 				PlatformSettings: {},
 			},
@@ -90,11 +84,11 @@ TEST.describe( 'Llm Plugin Tests', function ()
 
 		ASSERT.ok( !result.Error, result.Error );
 		ASSERT.ok( result.Success, 'should succeed' );
-		ASSERT.strictEqual( result.Result.Name, TEST_CONFIG.ChatLlm );
-		ASSERT.strictEqual( result.Result.Platform, TEST_CONFIG.LlmPlatform );
-		ASSERT.strictEqual( result.Result.ModelName, TEST_CONFIG.LlmModel );
-		ASSERT.strictEqual( result.Result.ModelTemperature, TEST_CONFIG.LlmTemperature );
-		ASSERT.strictEqual( result.Result.ContextSize, TEST_CONFIG.LlmContextSize );
+		ASSERT.strictEqual( result.Result.Name, TestHive.Llm.ChatLlm );
+		ASSERT.strictEqual( result.Result.Platform, TestHive.Llm.Platform );
+		ASSERT.strictEqual( result.Result.ModelName, TestHive.Llm.ModelName );
+		ASSERT.strictEqual( result.Result.ModelTemperature, TestHive.Llm.ModelTemperature );
+		ASSERT.strictEqual( result.Result.ContextSize, TestHive.Llm.ContextSize );
 		ASSERT.strictEqual( result.Result.CanEmbed, false );
 	} );
 

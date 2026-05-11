@@ -11,6 +11,8 @@ once per session (CLI, Discord).
 Hive.Open() is the legacy single-call entry point that builds a
 runtime and wraps it for one user — used by CLI, Discord, and the
 existing test suite.
+Hive.OpenGlobal() opens a named hive that lives inside the registry's
+own Hives/ folder (unlinked to any project directory).
 
 Layout:
 	.hive/
@@ -23,6 +25,8 @@ const PATH = require( 'path' );
 const FileUtils = require( '../Helpers/FileUtils.js' );
 const EventBus = require( '../Helpers/EventBus.js' );
 const Entities = require( './Entities.js' );
+const Registry = require( './Registry.js' );
+const PACKAGE = require( '../package.json' );
 
 
 //---------------------------------------------------------------------
@@ -37,6 +41,7 @@ class HiveRuntime
 		this.Registry = Registry;
 		this.HiveRoot = HiveRoot;
 		this.DataPath = PATH.join( HiveRoot, '.hive' );
+		this.HarnessVersion = PACKAGE.version;
 
 		this.Events = new EventBus();
 
@@ -49,6 +54,7 @@ class HiveRuntime
 			Logger: require( PATH.join( helpers_folder, 'Logger' ) ),
 			Strings: require( PATH.join( helpers_folder, 'Strings.js' ) ),
 			CommandProcessor: require( PATH.join( helpers_folder, 'CommandProcessor.js' ) ),
+			SqlStore: require( PATH.join( helpers_folder, 'SqlStore.js' ) ),
 		};
 
 		this.Plugins = {};
@@ -121,12 +127,13 @@ class Hive
 	//---------------------------------------------------------------------
 	// Shared infrastructure — delegated to the Runtime so that any
 	// per-request Hive sees the same Plugins/Events/Helpers.
-	get Registry()  { return this.Runtime.Registry; }
-	get HiveRoot()  { return this.Runtime.HiveRoot; }
-	get DataPath()  { return this.Runtime.DataPath; }
-	get Events()    { return this.Runtime.Events; }
-	get Helpers()   { return this.Runtime.Helpers; }
-	get Plugins()   { return this.Runtime.Plugins; }
+	get Registry()        { return this.Runtime.Registry; }
+	get HiveRoot()        { return this.Runtime.HiveRoot; }
+	get DataPath()        { return this.Runtime.DataPath; }
+	get HarnessVersion()  { return this.Runtime.HarnessVersion; }
+	get Events()          { return this.Runtime.Events; }
+	get Helpers()         { return this.Runtime.Helpers; }
+	get Plugins()         { return this.Runtime.Plugins; }
 
 
 	//---------------------------------------------------------------------
@@ -139,22 +146,43 @@ class Hive
 
 
 	//---------------------------------------------------------------------
-	// Legacy entry point — build a runtime and wrap it for one user.
-	// Used by CLI, Discord, and existing tests.
+	// Open a Hive for a given folder. If no Username is supplied and the
+	// registry has a 'default' user, that user is used as the implicit
+	// identity (zero-config flow).
 	static async Open( Registry, HiveRoot, Username, Credential )
 	{
 		var runtime = await HiveRuntime.OpenRuntime( Registry, HiveRoot );
 
+		var resolved_username = Username || '';
+		var resolved_credential = Credential || null;
+
+		// Zero-config fallback: if no username is given but a 'default' user exists,
+		// use it. Credential is optional (default user is typically passwordless).
+		if ( !resolved_username )
+		{
+			var users = await Registry.ListUsers();
+			for ( var index = 0; index < users.length; index++ )
+			{
+				if ( users[ index ].Username === 'default' )
+				{
+					resolved_username = 'default';
+					break;
+				}
+			}
+		}
+
 		var identity = {
-			UserName: Username || '',
-			SanitizedUserName: Entities.SanitizeUsername( Username || '' ),
+			UserName: resolved_username,
+			SanitizedUserName: Entities.SanitizeUsername( resolved_username ),
 			UserRole: 'guest',
 			Token: '',
 		};
 
-		if ( Credential )
+		// Authenticate when we have a username. Passwordless users succeed
+		// without a credential; password-protected users require one.
+		if ( resolved_username )
 		{
-			var auth = await Registry.Authenticate( Username, Credential );
+			var auth = await Registry.Authenticate( resolved_username, resolved_credential );
 			identity.UserName = auth.Username;
 			identity.SanitizedUserName = Entities.SanitizeUsername( auth.Username );
 			identity.UserRole = auth.Role;
@@ -169,6 +197,28 @@ class Hive
 		}
 
 		return hive;
+	}
+
+
+	//---------------------------------------------------------------------
+	// Open a named global hive that lives inside the registry's own
+	// Hives/ folder (unlinked to any project directory).
+	// If no registry is supplied, the default registry is ensured at
+	// ~/.hives (or HIVE_REGISTRY) and used.
+	static async OpenGlobal( Name, Username, Credential, RegistryInstance )
+	{
+		if ( !Name ) { throw new Error( 'OpenGlobal requires a hive Name.' ); }
+
+		var registry = RegistryInstance;
+		if ( !registry )
+		{
+			registry = await Registry.EnsureDefault();
+		}
+
+		var hive_root = PATH.join( registry.RegistryPath, 'Hives', Name );
+		await FileUtils.EnsureFolder( hive_root );
+
+		return await Hive.Open( registry, hive_root, Username, Credential );
 	}
 
 
@@ -197,6 +247,15 @@ class Hive
 	{
 		var plugin = this.Plugins[ PluginName ] || { PluginName: PluginName };
 		return await Entities.FindEntity( this, plugin, EntityName );
+	}
+
+
+	//---------------------------------------------------------------------
+	// Read the configuration object for a named entity belonging to a plugin.
+	async GetEntityConfig( PluginName, EntityName )
+	{
+		var plugin = this.Plugins[ PluginName ] || { PluginName: PluginName };
+		return await Entities.GetEntityConfig( this, plugin, EntityName );
 	}
 
 

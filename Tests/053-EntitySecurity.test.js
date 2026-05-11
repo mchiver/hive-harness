@@ -4,20 +4,16 @@ const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const Entities = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Entities.js' ) );
 const FileUtils = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'FileUtils.js' ) );
-
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
+const TestHive = require( './TestHive.js' );
 
 const USER_ALICE = 'sec-alice';
 const USER_BOB = 'sec-bob';
 const USER_EVE = 'sec-eve';
 
-const ENTITIES_ROOT = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities' );
+const ENTITIES_ROOT = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities' );
 const SHARED_ROOT = PATH.join( ENTITIES_ROOT, '.shared' );
 
 
@@ -26,7 +22,7 @@ const SHARED_ROOT = PATH.join( ENTITIES_ROOT, '.shared' );
 // without a credential. Uses a placeholder bcrypt hash.
 async function EnsureRegistryUser( Username )
 {
-	var users_folder = PATH.join( TEST_REGISTRY_PATH, 'Users' );
+	var users_folder = PATH.join( TestHive.REGISTRY_PATH, 'Users' );
 	var user_file = PATH.join( users_folder, Username + '.json' );
 	if ( await FileUtils.FileExists( user_file ) ) { return; }
 	await FileUtils.EnsureFolder( users_folder );
@@ -42,8 +38,8 @@ async function EnsureRegistryUser( Username )
 //---------------------------------------------------------------------
 async function OpenHiveAs( Username )
 {
-	var registry = await Registry.Open( TEST_REGISTRY_PATH );
-	var hive = await Hive.Open( registry, TEST_HIVE_ROOT, Username, null );
+	var registry = await TestHive.EnsureSetup();
+	var hive = await Hive.Open( registry, TestHive.HIVE_ROOT, Username, null );
 	return hive;
 }
 
@@ -88,7 +84,7 @@ TEST.describe( 'Entity Security Tests', function ()
 		await CleanupTestEntities();
 		for ( var user of [ USER_ALICE, USER_BOB, USER_EVE ] )
 		{
-			var user_file = PATH.join( TEST_REGISTRY_PATH, 'Users', user + '.json' );
+			var user_file = PATH.join( TestHive.REGISTRY_PATH, 'Users', user + '.json' );
 			if ( await FileUtils.FileExists( user_file ) )
 			{
 				await FileUtils.DeleteFile( user_file );

@@ -4,19 +4,15 @@ const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const FileUtils = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'FileUtils.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const TestHive = require( './TestHive.js' );
 
 var WORKFLOW_NAME = 'wf-test';
-var WORKFLOW_DATA_FOLDER = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'Workflow', WORKFLOW_NAME );
+var WORKFLOW_DATA_FOLDER = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'Workflow', WORKFLOW_NAME );
 
 // Also need a KeyStore for workflow steps to target
 var STORE_NAME = 'wf-data-store';
-var STORE_DATA_FOLDER = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'KeyStore', STORE_NAME );
+var STORE_DATA_FOLDER = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'KeyStore', STORE_NAME );
 
 
 //---------------------------------------------------------------------
@@ -27,8 +23,7 @@ TEST.describe( 'Workflow Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.before( async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Create the KeyStore entity for workflow steps to use
 		await hive.InvokeTool( 'KeyStore.ConfigEntity', { EntityName: STORE_NAME } );
@@ -80,8 +75,7 @@ TEST.describe( 'Workflow Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should run a multi-step workflow with variable interpolation', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'Workflow.RunWorkflow', {
 			EntityName: WORKFLOW_NAME,
@@ -105,15 +99,14 @@ TEST.describe( 'Workflow Tool Tests', function ()
 			EntityName: STORE_NAME,
 			Key: 'wf_result',
 		} );
-		ASSERT.strictEqual( get_key.Result.Value, TEST_CONFIG.Username, 'value should be the username from System.Info' );
+		ASSERT.strictEqual( get_key.Result.Value, TestHive.TESTUSER_NAME, 'value should be the username from System.Info' );
 	} );
 
 
 	//-----------------------------------------------------------------
 	TEST.it( 'should get workflow status by run ID', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Run workflow
 		var run = await hive.InvokeTool( 'Workflow.RunWorkflow', {
@@ -139,8 +132,7 @@ TEST.describe( 'Workflow Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should list workflow runs', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'Workflow.ListWorkflowRuns', {
 			EntityName: WORKFLOW_NAME,
@@ -154,8 +146,7 @@ TEST.describe( 'Workflow Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should filter runs by status', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'Workflow.ListWorkflowRuns', {
 			EntityName: WORKFLOW_NAME,
@@ -173,8 +164,7 @@ TEST.describe( 'Workflow Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should stop on error with OnError=stop', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Create a workflow with a failing step
 		await hive.InvokeTool( 'Workflow.ConfigEntity', {
@@ -207,7 +197,7 @@ TEST.describe( 'Workflow Tool Tests', function ()
 		ASSERT.ok( !result.Result.StepResults[ 0 ].Success );
 
 		// Clean up
-		var fail_folder = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'Workflow', WORKFLOW_NAME +'-fail' );
+		var fail_folder = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'Workflow', WORKFLOW_NAME +'-fail' );
 		if ( await FileUtils.FolderExists( fail_folder ) )
 		{
 			await FileUtils.DeleteFolder( fail_folder, true );
@@ -218,8 +208,7 @@ TEST.describe( 'Workflow Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should continue on error with OnError=continue', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Create a workflow with OnError=continue
 		await hive.InvokeTool( 'Workflow.ConfigEntity', {
@@ -252,7 +241,7 @@ TEST.describe( 'Workflow Tool Tests', function ()
 		ASSERT.ok( result.Result.StepResults[ 1 ].Success, 'second step should succeed' );
 
 		// Clean up
-		var cont_folder = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'Workflow', WORKFLOW_NAME +'-cont' );
+		var cont_folder = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'Workflow', WORKFLOW_NAME +'-cont' );
 		if ( await FileUtils.FolderExists( cont_folder ) )
 		{
 			await FileUtils.DeleteFolder( cont_folder, true );

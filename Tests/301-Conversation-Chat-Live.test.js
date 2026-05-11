@@ -3,21 +3,15 @@ const TEST = require( 'node:test' );
 const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 const FS = require( 'fs' ).promises;
+const TestHive = require( './TestHive.js' );
 
-const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
-const CONVERSATION_DATA_PATH = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'Conversation' );
+const CONVERSATION_DATA_PATH = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'Conversation' );
 
 
 //---------------------------------------------------------------------
 async function open_hive()
 {
-	var registry = await Registry.Open( TEST_REGISTRY_PATH );
-	var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+	var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 	return hive;
 }
 
@@ -28,9 +22,9 @@ async function create_conversation( Hive, Name )
 	await Hive.InvokeTool( 'Conversation.ConfigEntity', {
 		EntityName: Name,
 		Settings: {
-			Username: TEST_CONFIG.Username,
+			Username: TestHive.TESTUSER_NAME,
 			ChannelName: 'test',
-			ChatLlm: TEST_CONFIG.ChatLlm,
+			ChatLlm: TestHive.Llm.ChatLlm,
 			Skills: [ 'System.ToolUsageSkill' ],
 		},
 	} );
@@ -40,6 +34,23 @@ async function create_conversation( Hive, Name )
 //---------------------------------------------------------------------
 TEST.describe( 'Conversation Chat Live Tests — Tool Calling', function ()
 {
+
+	TEST.before( async function ()
+	{
+		// The test hive is wiped each process; seed the ChatLlm entity
+		// that Conversation.Chat depends on.
+		var hive = await open_hive();
+		await hive.InvokeTool( 'Llm.ConfigEntity', {
+			EntityName: TestHive.Llm.ChatLlm,
+			Settings: {
+				Platform: TestHive.Llm.Platform,
+				ModelName: TestHive.Llm.ModelName,
+				ModelTemperature: TestHive.Llm.ModelTemperature,
+				ContextSize: TestHive.Llm.ContextSize,
+			},
+		} );
+	} );
+
 
 	TEST.afterEach( async function ()
 	{

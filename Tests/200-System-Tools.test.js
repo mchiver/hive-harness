@@ -4,12 +4,8 @@ const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const PACKAGE = require( PATH.join( HIVEJS_PROJECT_ROOT, 'package.json' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const TestHive = require( './TestHive.js' );
 
 
 //---------------------------------------------------------------------
@@ -20,8 +16,7 @@ TEST.describe( 'System Tool Tests', function ()
 	//-----------------------------------------------------------------
 	async function open_hive()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 		return hive;
 	}
 
@@ -40,8 +35,8 @@ TEST.describe( 'System Tool Tests', function ()
 
 		ASSERT.ok( !result.Error, result.Error );
 		ASSERT.ok( result.Success, 'should succeed' );
-		ASSERT.strictEqual( result.Result.HiveRoot, TEST_HIVE_ROOT );
-		ASSERT.strictEqual( result.Result.UserName, TEST_CONFIG.Username );
+		ASSERT.strictEqual( result.Result.HiveRoot, TestHive.HIVE_ROOT );
+		ASSERT.strictEqual( result.Result.UserName, TestHive.TESTUSER_NAME );
 		ASSERT.strictEqual( result.Result.UserRole, 'admin' );
 		ASSERT.strictEqual( result.Result.Version, PACKAGE.version );
 	} );

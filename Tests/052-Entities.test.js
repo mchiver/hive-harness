@@ -3,12 +3,8 @@ const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const Entities = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Entities.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const TestHive = require( './TestHive.js' );
 
 
 //---------------------------------------------------------------------
@@ -83,8 +79,7 @@ TEST.describe( 'Entities Module Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should reject invalid entity names via ConfigEntity', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'Conversation.ConfigEntity', {
 			EntityName: '../etc',
@@ -98,8 +93,7 @@ TEST.describe( 'Entities Module Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should update existing entity via ConfigEntity', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Create entity
 		await hive.InvokeTool( 'Conversation.ConfigEntity', {
@@ -121,8 +115,7 @@ TEST.describe( 'Entities Module Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should reject invalid names via DeleteEntity', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'Conversation.DeleteEntity', { EntityName: '../etc' } );
 		ASSERT.ok( !result.Success, 'DeleteEntity should reject invalid name' );
@@ -132,8 +125,7 @@ TEST.describe( 'Entities Module Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should reject invalid current name via RenameEntity', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'Conversation.RenameEntity', {
 			EntityName: '../etc',
@@ -146,8 +138,7 @@ TEST.describe( 'Entities Module Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should reject invalid new name via RenameEntity', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Create a valid entity first
 		await hive.InvokeTool( 'Conversation.ConfigEntity', {
@@ -166,8 +157,7 @@ TEST.describe( 'Entities Module Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should use centralized GetEntityConfig via plugin', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Create an entity
 		await hive.InvokeTool( 'Conversation.ConfigEntity', {

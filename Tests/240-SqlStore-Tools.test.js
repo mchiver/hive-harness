@@ -4,15 +4,11 @@ const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const FileUtils = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'FileUtils.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const TestHive = require( './TestHive.js' );
 
 var ENTITY_NAME = 'sql-test-store';
-var ENTITY_DATA_FOLDER = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'SqlStore', ENTITY_NAME );
+var ENTITY_DATA_FOLDER = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'SqlStore', ENTITY_NAME );
 
 
 //---------------------------------------------------------------------
@@ -23,8 +19,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.before( async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Create the entity
 		await hive.InvokeTool( 'SqlStore.ConfigEntity', { EntityName: ENTITY_NAME } );
@@ -45,8 +40,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should list tables (empty database)', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.ListTables', {
 			EntityName: ENTITY_NAME,
@@ -62,8 +56,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should create a table with JSON schema', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.CreateTable', {
 			EntityName: ENTITY_NAME,
@@ -87,8 +80,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should create a table with raw SQL schema', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.CreateTable', {
 			EntityName: ENTITY_NAME,
@@ -105,8 +97,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should list tables after creation', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.ListTables', {
 			EntityName: ENTITY_NAME,
@@ -122,8 +113,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should get table schema', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.GetTableSchema', {
 			EntityName: ENTITY_NAME,
@@ -150,8 +140,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should return error for nonexistent table schema', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.GetTableSchema', {
 			EntityName: ENTITY_NAME,
@@ -166,8 +155,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should round-trip schema (GetTableSchema output usable in CreateTable)', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Get the schema from an existing table
 		var schema_result = await hive.InvokeTool( 'SqlStore.GetTableSchema', {
@@ -198,8 +186,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should execute insert and return status', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.ExecuteSql', {
 			EntityName: ENTITY_NAME,
@@ -217,8 +204,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should query rows', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Insert a couple more rows
 		await hive.InvokeTool( 'SqlStore.ExecuteSql', {
@@ -248,8 +234,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should query with bound parameters', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.QuerySql', {
 			EntityName: ENTITY_NAME,
@@ -266,8 +251,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should query with paging options', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.QuerySql', {
 			EntityName: ENTITY_NAME,
@@ -283,8 +267,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should execute update', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.ExecuteSql', {
 			EntityName: ENTITY_NAME,
@@ -308,8 +291,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should execute delete', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.ExecuteSql', {
 			EntityName: ENTITY_NAME,
@@ -325,8 +307,7 @@ TEST.describe( 'SqlStore Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should delete a table', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'SqlStore.DeleteTable', {
 			EntityName: ENTITY_NAME,

@@ -5,11 +5,7 @@ const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
 const EventBus = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'EventBus.js' ) );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const TestHive = require( './TestHive.js' );
 
 
 //---------------------------------------------------------------------
@@ -152,8 +148,7 @@ TEST.describe( 'EventBus integration with Hive', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should emit tool.before and tool.after events', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var events = [];
 		hive.Events.Subscribe( 'tool.before', async function ( data ) { events.push( { type: 'before', tool: data.ToolName } ); } );
@@ -173,8 +168,7 @@ TEST.describe( 'EventBus integration with Hive', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should emit tool.after with error on failed tool call', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var after_event = null;
 		hive.Events.Subscribe( 'tool.after', async function ( data ) { after_event = data; } );
@@ -190,8 +184,7 @@ TEST.describe( 'EventBus integration with Hive', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should match tool.* wildcard for tool events', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var count = 0;
 		hive.Events.Subscribe( 'tool.*', async function () { count++; } );

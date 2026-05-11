@@ -7,7 +7,6 @@ Workflow runs are tracked in a SQLite database per entity.
 */
 
 const PATH = require( 'path' );
-const SqlStoreHelper = require( '../../Helpers/SqlStore.js' );
 
 class Factory
 {
@@ -43,7 +42,7 @@ class Factory
 			await Hive.Helpers.FileUtils.EnsureFolder( store_folder );
 
 			var db_path = PATH.join( store_folder, 'runs.db' );
-			var store = new SqlStoreHelper();
+			var store = new Hive.Helpers.SqlStore();
 			store.Open( db_path, { JournalMode: 'wal', ForeignKeys: true } );
 
 			store.Execute( `CREATE TABLE IF NOT EXISTS runs (

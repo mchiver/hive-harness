@@ -8,8 +8,6 @@ order book, and trade history stored in SQLite.
 */
 
 const PATH = require( 'path' );
-const SqlStoreHelper = require( '../../Helpers/SqlStore.js' );
-const Entities = require( '../../Source/Entities.js' );
 
 
 class Factory
@@ -119,7 +117,7 @@ class Factory
 			await Hive.Helpers.FileUtils.EnsureFolder( store_folder );
 
 			var db_path = PATH.join( store_folder, 'exchange.db' );
-			var store = new SqlStoreHelper();
+			var store = new Hive.Helpers.SqlStore();
 			store.Open( db_path, { JournalMode: 'wal', ForeignKeys: true, BusyTimeout: 5000 } );
 
 			Plugin.EnsureTables( store );
@@ -170,7 +168,7 @@ class Factory
 		// Load entity config from disk.
 		Plugin.GetEntityConfig = async function ( Hive, EntityName )
 		{
-			return await Entities.GetEntityConfig( Hive, this, EntityName );
+			return await Hive.GetEntityConfig( this.PluginName, EntityName );
 		};
 
 

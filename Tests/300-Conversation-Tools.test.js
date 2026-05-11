@@ -3,14 +3,9 @@ const TEST = require( 'node:test' );
 const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 const FS = require( 'fs' ).promises;
+const TestHive = require( './TestHive.js' );
 
-const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
-const CONVERSATION_DATA_PATH = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'Conversation' );
+const CONVERSATION_DATA_PATH = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'Conversation' );
 
 
 //---------------------------------------------------------------------
@@ -26,8 +21,8 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 		try { await FS.rm( CONVERSATION_DATA_PATH, { recursive: true, force: true } ); }
 		catch {}
 
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var registry = await TestHive.EnsureSetup();
+		hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 	} );
 
 	TEST.after( async function ()
@@ -87,20 +82,20 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 			EntityName: 'test-convo',
 			Settings: {
 				Description: 'Test conversation',
-				Username: TEST_CONFIG.Username,
+				Username: TestHive.TESTUSER_NAME,
 				ChannelName: 'cli',
 				Topics: [],
 				Skills: [ 'System.ToolUsageSkill' ],
-				ChatLlm: TEST_CONFIG.ChatLlm,
+				ChatLlm: TestHive.Llm.ChatLlm,
 			},
 		} );
 
 		ASSERT.strictEqual( result.Success, true );
 		ASSERT.strictEqual( result.Result.Name, 'test-convo' );
 		ASSERT.strictEqual( result.Result.Description, 'Test conversation' );
-		ASSERT.strictEqual( result.Result.Username, TEST_CONFIG.Username );
+		ASSERT.strictEqual( result.Result.Username, TestHive.TESTUSER_NAME );
 		ASSERT.strictEqual( result.Result.ChannelName, 'cli' );
-		ASSERT.strictEqual( result.Result.ChatLlm, TEST_CONFIG.ChatLlm );
+		ASSERT.strictEqual( result.Result.ChatLlm, TestHive.Llm.ChatLlm );
 		ASSERT.deepStrictEqual( result.Result.Skills, [ 'System.ToolUsageSkill' ] );
 	} );
 
@@ -126,7 +121,7 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 
 		ASSERT.strictEqual( result.Success, true );
 		ASSERT.strictEqual( result.Result.Name, 'test-convo' );
-		ASSERT.strictEqual( result.Result.Username, TEST_CONFIG.Username );
+		ASSERT.strictEqual( result.Result.Username, TestHive.TESTUSER_NAME );
 	} );
 
 
@@ -139,7 +134,7 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 	TEST.it( 'should list conversations by username', async function ()
 	{
 		var result = await hive.InvokeTool( 'Conversation.ListConversations', {
-			Username: TEST_CONFIG.Username,
+			Username: TestHive.TESTUSER_NAME,
 		} );
 
 		ASSERT.strictEqual( result.Success, true );
@@ -152,7 +147,7 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 	TEST.it( 'should filter conversations by channel name', async function ()
 	{
 		var result = await hive.InvokeTool( 'Conversation.ListConversations', {
-			Username: TEST_CONFIG.Username,
+			Username: TestHive.TESTUSER_NAME,
 			ChannelName: 'cli',
 		} );
 
@@ -180,14 +175,14 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 		await hive.InvokeTool( 'Conversation.ConfigEntity', {
 			EntityName: 'discord-convo',
 			Settings: {
-				Username: TEST_CONFIG.Username,
+				Username: TestHive.TESTUSER_NAME,
 				ChannelName: 'discord',
-				ChatLlm: TEST_CONFIG.ChatLlm,
+				ChatLlm: TestHive.Llm.ChatLlm,
 			},
 		} );
 
 		var cli_result = await hive.InvokeTool( 'Conversation.ListConversations', {
-			Username: TEST_CONFIG.Username,
+			Username: TestHive.TESTUSER_NAME,
 			ChannelName: 'cli*',
 		} );
 
@@ -210,7 +205,7 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 		await plugin.TouchUsedAt( hive, 'test-convo' );
 
 		var result = await hive.InvokeTool( 'Conversation.GetLastConversation', {
-			Username: TEST_CONFIG.Username,
+			Username: TestHive.TESTUSER_NAME,
 		} );
 
 		ASSERT.strictEqual( result.Success, true );
@@ -241,14 +236,14 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 	{
 		var plugin = hive.Plugins.Conversation;
 
-		await plugin.AppendMessage( hive, 'test-convo', TEST_CONFIG.Username, '', '', 'Hello there' );
-		await plugin.AppendMessage( hive, 'test-convo', '', TEST_CONFIG.ChatLlm, '', 'Hi! How can I help?' );
+		await plugin.AppendMessage( hive, 'test-convo', TestHive.TESTUSER_NAME, '', '', 'Hello there' );
+		await plugin.AppendMessage( hive, 'test-convo', '', TestHive.Llm.ChatLlm, '', 'Hi! How can I help?' );
 
 		var rows = await plugin.GetRecentMessages( hive, 'test-convo', 10 );
 		ASSERT.ok( rows.length >= 2, 'should have at least 2 messages' );
 
 		var last = rows[ rows.length - 1 ];
-		ASSERT.strictEqual( last.LlmName, TEST_CONFIG.ChatLlm );
+		ASSERT.strictEqual( last.LlmName, TestHive.Llm.ChatLlm );
 		ASSERT.strictEqual( last.Text, 'Hi! How can I help?' );
 		ASSERT.ok( last.MessageID > 0, 'should have MessageID' );
 		ASSERT.ok( last.Timestamp, 'should have Timestamp' );
@@ -261,7 +256,7 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 	{
 		var plugin = hive.Plugins.Conversation;
 
-		var msg = await plugin.AppendMessage( hive, 'test-convo', TEST_CONFIG.Username, '', '', 'run a tool' );
+		var msg = await plugin.AppendMessage( hive, 'test-convo', TestHive.TESTUSER_NAME, '', '', 'run a tool' );
 		await plugin.AppendToolCall(
 			hive, 'test-convo', msg.MessageID,
 			'test-convo', 'System.Info', 'ok',
@@ -285,7 +280,7 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 		// Add several entries
 		for ( var i = 0; i < 5; i++ )
 		{
-			await plugin.AppendMessage( hive, 'test-convo', TEST_CONFIG.Username, '', '', 'Message ' + i );
+			await plugin.AppendMessage( hive, 'test-convo', TestHive.TESTUSER_NAME, '', '', 'Message ' + i );
 		}
 
 		var rows = await plugin.GetRecentMessages( hive, 'test-convo', 3 );
@@ -483,7 +478,7 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 		// Create a conversation without ChatLlm
 		await hive.InvokeTool( 'Conversation.ConfigEntity', {
 			EntityName: 'no-llm-convo',
-			Settings: { Username: TEST_CONFIG.Username, ChatLlm: '' },
+			Settings: { Username: TestHive.TESTUSER_NAME, ChatLlm: '' },
 		} );
 
 		var result = await hive.InvokeTool( 'Conversation.Chat', {
@@ -510,7 +505,7 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 	{
 		await hive.InvokeTool( 'Conversation.ConfigEntity', {
 			EntityName: 'delete-me',
-			Settings: { Username: TEST_CONFIG.Username },
+			Settings: { Username: TestHive.TESTUSER_NAME },
 		} );
 
 		var result = await hive.InvokeTool( 'Conversation.DeleteEntity', {
@@ -530,7 +525,7 @@ TEST.describe( 'Conversation Plugin Tests', function ()
 	{
 		await hive.InvokeTool( 'Conversation.ConfigEntity', {
 			EntityName: 'rename-me',
-			Settings: { Username: TEST_CONFIG.Username, Description: 'to rename' },
+			Settings: { Username: TestHive.TESTUSER_NAME, Description: 'to rename' },
 		} );
 
 		var result = await hive.InvokeTool( 'Conversation.RenameEntity', {

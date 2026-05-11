@@ -4,14 +4,11 @@ const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const FileUtils = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'FileUtils.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
+const TestHive = require( './TestHive.js' );
 
-var WORKSPACE_FOLDER = PATH.join( TEST_HIVE_ROOT, 'workspace-test' );
+var WORKSPACE_FOLDER = PATH.join( TestHive.HIVE_ROOT, 'workspace-test' );
 
 
 //---------------------------------------------------------------------
@@ -40,8 +37,8 @@ TEST.describe( 'Workspace Tool Tests', function ()
 	// Helper to open a hive rooted at the workspace test folder.
 	async function open_workspace_hive()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, WORKSPACE_FOLDER, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var registry = await TestHive.EnsureSetup();
+		var hive = await Hive.Open( registry, WORKSPACE_FOLDER, TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 		return hive;
 	}
 

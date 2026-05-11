@@ -5,12 +5,8 @@ const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
 const CommandProcessor = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'CommandProcessor.js' ) );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const FileUtils = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'FileUtils.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const TestHive = require( './TestHive.js' );
 
 
 //---------------------------------------------------------------------
@@ -201,8 +197,7 @@ TEST.describe( 'CommandProcessor.Validate', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should validate a known plugin and tool', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = CommandProcessor.Validate( hive, 'KeyStore', 'GetKey', { EntityName: 'x', Key: 'y' } );
 		ASSERT.ok( result.Valid );
@@ -214,8 +209,7 @@ TEST.describe( 'CommandProcessor.Validate', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should return error for unknown plugin', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = CommandProcessor.Validate( hive, 'Bogus', 'GetKey', {} );
 		ASSERT.ok( !result.Valid );
@@ -226,8 +220,7 @@ TEST.describe( 'CommandProcessor.Validate', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should return error for unknown tool', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = CommandProcessor.Validate( hive, 'KeyStore', 'Bogus', {} );
 		ASSERT.ok( !result.Valid );
@@ -238,8 +231,7 @@ TEST.describe( 'CommandProcessor.Validate', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should return error for missing required parameter', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = CommandProcessor.Validate( hive, 'KeyStore', 'GetKey', { EntityName: 'x' } );
 		ASSERT.ok( !result.Valid );
@@ -353,14 +345,13 @@ TEST.describe( 'CommandProcessor.Invoke (integration)', function ()
 {
 
 	var STORE_NAME = 'cmd-test-store';
-	var STORE_DATA_FOLDER = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'KeyStore', STORE_NAME );
+	var STORE_DATA_FOLDER = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'KeyStore', STORE_NAME );
 
 
 	//-----------------------------------------------------------------
 	TEST.before( async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 		await hive.InvokeTool( 'KeyStore.ConfigEntity', { EntityName: STORE_NAME } );
 
 		var data_path = PATH.join( STORE_DATA_FOLDER, STORE_NAME + '.data.json' );
@@ -382,8 +373,7 @@ TEST.describe( 'CommandProcessor.Invoke (integration)', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should invoke a tool via CommandProcessor.Invoke', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await CommandProcessor.Invoke( hive, 'KeyStore', 'SetKey', {
 			EntityName: STORE_NAME,
@@ -399,8 +389,7 @@ TEST.describe( 'CommandProcessor.Invoke (integration)', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should invoke via Hive.InvokeTool (delegates to CommandProcessor)', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'KeyStore.GetKey', {
 			EntityName: STORE_NAME,
@@ -415,8 +404,7 @@ TEST.describe( 'CommandProcessor.Invoke (integration)', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should throw for unknown plugin via Invoke', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		await ASSERT.rejects(
 			async function () { await CommandProcessor.Invoke( hive, 'Bogus', 'GetKey', {} ); },
@@ -436,8 +424,8 @@ TEST.describe( 'CommandProcessor.SuggestTools', function ()
 
 	TEST.before( async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var registry = await TestHive.EnsureSetup();
+		hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 	} );
 
 
@@ -530,8 +518,8 @@ TEST.describe( 'CommandProcessor.SuggestEntities', function ()
 
 	TEST.before( async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var registry = await TestHive.EnsureSetup();
+		hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Create test entities
 		await hive.InvokeTool( 'KeyStore.ConfigEntity', { EntityName: ENTITY_NAME_A, Settings: { Description: 'Alpha' } } );

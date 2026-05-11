@@ -106,25 +106,47 @@ class Channel
 
 	//---------------------------------------------------------------------
 	// Open Registry and Hive. Does NOT resolve conversation.
+	//   --registry <path>   Explicit registry path. Defaults to HIVE_REGISTRY env or ~/.hives.
+	//                       The registry is auto-initialized if missing.
+	//   --hive <name>       Opens the named global hive at <registry>/Hives/<name>/.
+	//   --path <path>       Opens the given folder as a project-scoped hive.
+	//   (no flag)           Opens the current working directory as a project-scoped hive.
 	async Initialize()
 	{
-		// Resolve registry path
-		var registry_path = this.Options.registry || PATH.join( OS.homedir(), '.hives' );
-		if ( !await FileUtils.FolderExists( registry_path ) )
+		// Resolve the registry path.
+		// - Explicit --registry <path>: must already exist; do not auto-create.
+		// - Default location (no flag): auto-initialize if missing.
+		if ( this.Options.registry )
 		{
-			throw new Error( 'Registry not found at: ' + registry_path );
+			var explicit_path = this.Options.registry;
+			if ( !await FileUtils.FolderExists( explicit_path ) )
+			{
+				throw new Error( 'Registry not found: ' + explicit_path );
+			}
+			this.Registry = await Registry.Open( explicit_path );
 		}
-		this.Registry = await Registry.Open( registry_path );
+		else
+		{
+			this.Registry = await Registry.EnsureDefault( Registry.DefaultPath() );
+		}
 
-		// Resolve username
-		this.UserName = this.Options.username || OS.userInfo().username;
-
-		// Resolve hive path
-		var hive_path = this.Options.hive || this.Options.path || process.cwd();
-
-		// Open hive (with optional password)
+		// Optional credentials. Username defaults inside Hive.Open to the registry's 'default' user.
+		var username = this.Options.username || '';
 		var password = this.Options.password || null;
-		this.Hive = await Hive.Open( this.Registry, hive_path, this.UserName, password );
+
+		if ( this.Options.hive )
+		{
+			// Named global hive
+			this.Hive = await Hive.OpenGlobal( this.Options.hive, username, password, this.Registry );
+		}
+		else
+		{
+			var hive_path = this.Options.path || process.cwd();
+			this.Hive = await Hive.Open( this.Registry, hive_path, username, password );
+		}
+
+		// Reflect the resolved identity (may have come from the default user).
+		this.UserName = this.Hive.UserName;
 	}
 
 

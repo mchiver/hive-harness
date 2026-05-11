@@ -4,9 +4,6 @@
 Returns basic information about the hive.
 */
 
-const PATH = require( 'path' );
-const PACKAGE = require( PATH.join( __dirname, '..', '..', '..', '..', 'package.json' ) );
-
 
 module.exports = function ( Tool )
 {
@@ -39,7 +36,7 @@ module.exports = function ( Tool )
 			HiveRoot: Hive.HiveRoot,
 			UserName: Hive.UserName,
 			UserRole: Hive.UserRole,
-			Version: PACKAGE.version,
+			Version: Hive.HarnessVersion,
 		};
 	};
 

@@ -4,15 +4,11 @@ const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
 const FileUtils = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Helpers', 'FileUtils.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
+const TestHive = require( './TestHive.js' );
 
 var STORE_NAME = 'tool-test-store';
-var STORE_DATA_FOLDER = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'KeyStore', STORE_NAME );
+var STORE_DATA_FOLDER = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'KeyStore', STORE_NAME );
 
 
 //---------------------------------------------------------------------
@@ -24,8 +20,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	TEST.before( async function ()
 	{
 		// Create the store entity and its data file via tools
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Create the entity
 		await hive.InvokeTool( 'KeyStore.ConfigEntity', { EntityName: STORE_NAME } );
@@ -51,8 +46,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should set a key', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'KeyStore.SetKey', {
 			EntityName: STORE_NAME,
@@ -69,8 +63,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should get a key', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Set first
 		await hive.InvokeTool( 'KeyStore.SetKey', {
@@ -96,8 +89,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should return error for missing key', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'KeyStore.GetKey', {
 			EntityName: STORE_NAME,
@@ -112,8 +104,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should update an existing key and preserve CreatedAt', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Set initial value
 		await hive.InvokeTool( 'KeyStore.SetKey', {
@@ -150,8 +141,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should list keys', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Set a few keys
 		await hive.InvokeTool( 'KeyStore.SetKey', { EntityName: STORE_NAME, Key: 'list_a', Value: 1 } );
@@ -169,8 +159,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should list keys with glob filter', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Set keys with a pattern
 		await hive.InvokeTool( 'KeyStore.SetKey', { EntityName: STORE_NAME, Key: 'user_name', Value: 'alice' } );
@@ -194,8 +183,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should delete a key', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Set then delete
 		await hive.InvokeTool( 'KeyStore.SetKey', { EntityName: STORE_NAME, Key: 'to_delete', Value: 'bye' } );
@@ -221,8 +209,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should return error when deleting nonexistent key', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		var result = await hive.InvokeTool( 'KeyStore.DeleteKey', {
 			EntityName: STORE_NAME,
@@ -237,8 +224,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should clear all keys', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Set some keys
 		await hive.InvokeTool( 'KeyStore.SetKey', { EntityName: STORE_NAME, Key: 'clear_a', Value: 1 } );
@@ -260,8 +246,7 @@ TEST.describe( 'Store Tool Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should clear keys matching a glob', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		// Set keys
 		await hive.InvokeTool( 'KeyStore.SetKey', { EntityName: STORE_NAME, Key: 'temp_1', Value: 'a' } );

@@ -3,11 +3,9 @@ const TEST = require( 'node:test' );
 const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
 const CHILD_PROCESS = require( 'child_process' );
+const TestHive = require( './TestHive.js' );
 
 const CLI_PATH = PATH.join( __dirname, '..', 'Channels', 'Cli', 'Cli.js' );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
 
 
 //---------------------------------------------------------------------
@@ -55,7 +53,7 @@ TEST.describe( 'CLI Channel Integration Tests', function ()
 	{
 		var result = await run_cli( [
 			'--registry', PATH.join( __dirname, 'nonexistent-registry' ),
-			'--path', TEST_HIVE_ROOT,
+			'--path', TestHive.HIVE_ROOT,
 			'--username', 'testuser',
 			'System.Info',
 		] );
@@ -68,11 +66,11 @@ TEST.describe( 'CLI Channel Integration Tests', function ()
 	TEST.it( 'should execute one-shot tool invocation', async function ()
 	{
 		var result = await run_cli( [
-			'--registry', TEST_REGISTRY_PATH,
-			'--path', TEST_HIVE_ROOT,
-			'--username', TEST_CONFIG.Username,
-			'--password', TEST_CONFIG.Password,
-			'--llm', TEST_CONFIG.ChatLlm,
+			'--registry', TestHive.REGISTRY_PATH,
+			'--path', TestHive.HIVE_ROOT,
+			'--username', TestHive.TESTUSER_NAME,
+			'--password', TestHive.TESTUSER_PASSWORD,
+			'--llm', TestHive.Llm.ChatLlm,
 			'System.Info',
 		] );
 
@@ -87,11 +85,11 @@ TEST.describe( 'CLI Channel Integration Tests', function ()
 	TEST.it( 'should produce dry run report with --test', async function ()
 	{
 		var result = await run_cli( [
-			'--registry', TEST_REGISTRY_PATH,
-			'--path', TEST_HIVE_ROOT,
-			'--username', TEST_CONFIG.Username,
-			'--password', TEST_CONFIG.Password,
-			'--llm', TEST_CONFIG.ChatLlm,
+			'--registry', TestHive.REGISTRY_PATH,
+			'--path', TestHive.HIVE_ROOT,
+			'--username', TestHive.TESTUSER_NAME,
+			'--password', TestHive.TESTUSER_PASSWORD,
+			'--llm', TestHive.Llm.ChatLlm,
 			'--test',
 		] );
 
@@ -99,7 +97,7 @@ TEST.describe( 'CLI Channel Integration Tests', function ()
 		var report = JSON.parse( result.stdout );
 		ASSERT.ok( report.Registry, 'should have Registry path' );
 		ASSERT.ok( report.HivePath, 'should have HivePath' );
-		ASSERT.strictEqual( report.UserName, TEST_CONFIG.Username );
+		ASSERT.strictEqual( report.UserName, TestHive.TESTUSER_NAME );
 		ASSERT.strictEqual( report.ChannelName, 'cli' );
 		ASSERT.ok( report.ConversationName, 'should have ConversationName' );
 		ASSERT.ok( report.Plugins.length > 0, 'should have plugins' );
@@ -112,11 +110,11 @@ TEST.describe( 'CLI Channel Integration Tests', function ()
 	TEST.it( 'should handle one-shot with unknown tool gracefully', async function ()
 	{
 		var result = await run_cli( [
-			'--registry', TEST_REGISTRY_PATH,
-			'--path', TEST_HIVE_ROOT,
-			'--username', TEST_CONFIG.Username,
-			'--password', TEST_CONFIG.Password,
-			'--llm', TEST_CONFIG.ChatLlm,
+			'--registry', TestHive.REGISTRY_PATH,
+			'--path', TestHive.HIVE_ROOT,
+			'--username', TestHive.TESTUSER_NAME,
+			'--password', TestHive.TESTUSER_PASSWORD,
+			'--llm', TestHive.Llm.ChatLlm,
 			'hello world',
 		], 60000 );
 

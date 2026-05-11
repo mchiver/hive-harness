@@ -6,12 +6,8 @@ const FS = require( 'fs' ).promises;
 
 const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
 const Channel = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Channel.js' ) );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
-const CONVERSATION_DATA_PATH = PATH.join( TEST_HIVE_ROOT, '.hive', 'Entities', TEST_CONFIG.Username, 'Conversation' );
+const TestHive = require( './TestHive.js' );
+const CONVERSATION_DATA_PATH = PATH.join( TestHive.HIVE_ROOT, '.hive', 'Entities', TestHive.TESTUSER_NAME, 'Conversation' );
 
 
 //---------------------------------------------------------------------
@@ -68,10 +64,10 @@ async function create_test_channel()
 	var channel = new TestChannel();
 	channel.Options = {
 		_: [],
-		registry: TEST_REGISTRY_PATH,
-		path: TEST_HIVE_ROOT,
-		username: TEST_CONFIG.Username,
-		password: TEST_CONFIG.Password,
+		registry: TestHive.REGISTRY_PATH,
+		path: TestHive.HIVE_ROOT,
+		username: TestHive.TESTUSER_NAME,
+		password: TestHive.TESTUSER_PASSWORD,
 	};
 	await channel.Initialize();
 	return channel;
@@ -101,7 +97,7 @@ TEST.describe( 'Channel Base Class Tests', function ()
 
 		ASSERT.ok( channel.Registry, 'should have Registry' );
 		ASSERT.ok( channel.Hive, 'should have Hive' );
-		ASSERT.strictEqual( channel.UserName, TEST_CONFIG.Username );
+		ASSERT.strictEqual( channel.UserName, TestHive.TESTUSER_NAME );
 		ASSERT.ok( channel.Hive.UserName, 'Hive should have username' );
 		ASSERT.ok( channel.Hive.Token, 'Hive should be authenticated' );
 	} );
@@ -114,8 +110,8 @@ TEST.describe( 'Channel Base Class Tests', function ()
 		channel.Options = {
 			_: [],
 			registry: PATH.join( __dirname, 'nonexistent-registry' ),
-			path: TEST_HIVE_ROOT,
-			username: TEST_CONFIG.Username,
+			path: TestHive.HIVE_ROOT,
+			username: TestHive.TESTUSER_NAME,
 		};
 
 		await ASSERT.rejects( async function ()
@@ -134,7 +130,7 @@ TEST.describe( 'Channel Base Class Tests', function ()
 	TEST.it( 'should create a new conversation when none exist', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 		await channel.ResolveConversation( channel.Hive );
 
 		ASSERT.ok( channel.ConversationName, 'should have a conversation name' );
@@ -146,12 +142,12 @@ TEST.describe( 'Channel Base Class Tests', function ()
 	TEST.it( 'should use --conversation flag when provided', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 
 		// Create a conversation first
 		await channel.Hive.InvokeTool( 'Conversation.ConfigEntity', {
 			EntityName: 'explicit-convo',
-			Settings: { Username: TEST_CONFIG.Username, ChannelName: 'test' },
+			Settings: { Username: TestHive.TESTUSER_NAME, ChannelName: 'test' },
 		} );
 
 		channel.Options.conversation = 'explicit-convo';
@@ -178,15 +174,15 @@ TEST.describe( 'Channel Base Class Tests', function ()
 	TEST.it( 'should resume the last conversation for user + channel', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 
 		// Create a conversation with matching username and channel
 		await channel.Hive.InvokeTool( 'Conversation.ConfigEntity', {
 			EntityName: 'resume-me',
 			Settings: {
-				Username: TEST_CONFIG.Username,
+				Username: TestHive.TESTUSER_NAME,
 				ChannelName: 'test',
-				ChatLlm: TEST_CONFIG.ChatLlm,
+				ChatLlm: TestHive.Llm.ChatLlm,
 				UsedAt: new Date().toISOString(),
 			},
 		} );
@@ -270,7 +266,7 @@ TEST.describe( 'Channel Base Class Tests', function ()
 	TEST.it( 'should route free text to Conversation.Chat', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 		await channel.ResolveConversation( channel.Hive );
 
 		// Free text that doesn't match a tool or command goes to Chat.
@@ -307,7 +303,7 @@ TEST.describe( 'Channel Base Class Tests', function ()
 	TEST.it( 'should handle /Conversation with no args (list)', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 		await channel.ResolveConversation( channel.Hive );
 
 		channel.OutputLog = [];
@@ -322,7 +318,7 @@ TEST.describe( 'Channel Base Class Tests', function ()
 	TEST.it( 'should handle /NewConversation', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 
 		await channel.HandleCommand( channel.Hive, '/NewConversation test-new-convo' );
 
@@ -399,7 +395,7 @@ TEST.describe( 'Channel Base Class Tests', function ()
 	TEST.it( 'should output a dry run report', async function ()
 	{
 		var channel = await create_test_channel();
-		channel.Options.llm = TEST_CONFIG.ChatLlm;
+		channel.Options.llm = TestHive.Llm.ChatLlm;
 		await channel.ResolveConversation( channel.Hive );
 
 		channel.OutputLog = [];

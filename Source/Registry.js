@@ -8,6 +8,7 @@ RegistryPath is typically ~/.hives
 */
 
 const PATH = require( 'path' );
+const OS = require( 'os' );
 const JWT = require( 'jsonwebtoken' );
 const BCRYPT = require( 'bcrypt' );
 
@@ -28,6 +29,94 @@ class Registry
 		this.RegistryPath = RegistryPath;
 		this.Config = {};
 		return;
+	}
+
+
+	//---------------------------------------------------------------------
+	// Resolve the default registry path.
+	// Honors the HIVE_REGISTRY environment variable, falling back to ~/.hives.
+	static DefaultPath()
+	{
+		if ( process.env.HIVE_REGISTRY )
+		{
+			return process.env.HIVE_REGISTRY;
+		}
+		return PATH.join( OS.homedir(), '.hives' );
+	}
+
+
+	//---------------------------------------------------------------------
+	// Ensure a default registry exists at the given path (or DefaultPath()).
+	// - Creates Plugins/, Users/, Hives/ folders.
+	// - Seeds plugin.link.json for every plugin bundled with the harness.
+	// - Creates a passwordless 'default' user with role=user if none exist.
+	// - Writes a minimal registry.config.json if missing.
+	// Returns an opened Registry instance.
+	static async EnsureDefault( RegistryPath )
+	{
+		var registry_path = RegistryPath || Registry.DefaultPath();
+
+		await FileUtils.EnsureFolder( registry_path );
+		await FileUtils.EnsureFolder( PATH.join( registry_path, 'Plugins' ) );
+		await FileUtils.EnsureFolder( PATH.join( registry_path, 'Users' ) );
+		await FileUtils.EnsureFolder( PATH.join( registry_path, 'Hives' ) );
+
+		// Seed registry.config.json
+		var config_path = PATH.join( registry_path, 'registry.config.json' );
+		if ( !await FileUtils.FileExists( config_path ) )
+		{
+			await FileUtils.WriteJson( config_path, {
+				Version: '1.0.0',
+				Description: 'Default hive-harness registry.',
+				DefaultRole: 'guest',
+				CreatedAt: new Date().toISOString(),
+			} );
+		}
+
+		// Seed plugin links for every plugin bundled with the harness.
+		var bundled_plugins_folder = PATH.join( __dirname, '..', 'Plugins' );
+		if ( await FileUtils.FolderExists( bundled_plugins_folder ) )
+		{
+			var bundled_names = await FileUtils.ListFolders( bundled_plugins_folder );
+			for ( var index = 0; index < bundled_names.length; index++ )
+			{
+				var plugin_name = bundled_names[ index ];
+				var link_folder = PATH.join( registry_path, 'Plugins', plugin_name );
+				var link_path = PATH.join( link_folder, 'plugin.link.json' );
+				var bundled_target = PATH.join( bundled_plugins_folder, plugin_name );
+
+				// If an existing link points to a path that no longer exists,
+				// auto-heal by rewriting it to the bundled plugin folder.
+				if ( await FileUtils.FileExists( link_path ) )
+				{
+					var existing = await FileUtils.ReadJson( link_path );
+					if ( existing && existing.Path && await FileUtils.FolderExists( existing.Path ) )
+					{
+						continue;
+					}
+				}
+
+				await FileUtils.EnsureFolder( link_folder );
+				await FileUtils.WriteJson( link_path, {
+					Path: bundled_target,
+				} );
+			}
+		}
+
+		// Always ensure the `default` user exists. This is the passwordless
+		// fallback user used when callers do not supply credentials.
+		var users_folder = PATH.join( registry_path, 'Users' );
+		var default_user_path = PATH.join( users_folder, 'default.json' );
+		if ( !await FileUtils.FileExists( default_user_path ) )
+		{
+			await FileUtils.WriteJson( default_user_path, {
+				Description: 'Default zero-config user.',
+				Role: 'user',
+				CreatedAt: new Date().toISOString(),
+			} );
+		}
+
+		return await Registry.Open( registry_path );
 	}
 
 
@@ -256,7 +345,8 @@ class Registry
 
 
 	//---------------------------------------------------------------------
-	// Authenticate a user with password or validate a token
+	// Authenticate a user with password or validate a token.
+	// Users without a PasswordHash authenticate automatically (no token issued).
 	async Authenticate( Username, Credential )
 	{
 		var users_folder = PATH.join( this.RegistryPath, 'Users' );
@@ -269,6 +359,16 @@ class Registry
 		if ( !user )
 		{
 			throw new Error( 'User not found: ' + Username );
+		}
+
+		// Passwordless user — accept without credential. No token issued.
+		if ( !user.PasswordHash )
+		{
+			return {
+				Username: Username,
+				Role: user.Role || 'guest',
+				Token: '',
+			};
 		}
 
 		// If credential looks like a JWT (starts with eyJ), try to validate it
@@ -293,11 +393,6 @@ class Registry
 		}
 
 		// Otherwise, treat as password - compare with bcrypt
-		if ( !user.PasswordHash )
-		{
-			throw new Error( 'User has no password set' );
-		}
-
 		var is_valid = await BCRYPT.compare( Credential, user.PasswordHash );
 		if ( !is_valid )
 		{

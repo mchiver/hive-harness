@@ -7,8 +7,6 @@ retrieval, and tool calling.
 */
 
 const PATH = require( 'path' );
-const SqlStoreHelper = require( '../../Helpers/SqlStore.js' );
-const Entities = require( '../../Source/Entities.js' );
 
 
 class Factory
@@ -83,7 +81,7 @@ class Factory
 
 			var db_path = PATH.join( store_folder, 'history.db' );
 
-			var store = new SqlStoreHelper();
+			var store = new Hive.Helpers.SqlStore();
 			store.Open( db_path, { JournalMode: 'wal', BusyTimeout: 5000 } );
 
 			var tables = store.ListTables();
@@ -108,7 +106,7 @@ class Factory
 		// Load entity config from disk.
 		Plugin.GetEntityConfig = async function ( Hive, EntityName )
 		{
-			return await Entities.GetEntityConfig( Hive, this, EntityName );
+			return await Hive.GetEntityConfig( this.PluginName, EntityName );
 		};
 
 
@@ -287,7 +285,6 @@ class Factory
 					try
 					{
 						var entity_folder = await Hive.GetEntityDataPath( plugin_name, local_name );
-						var PATH = require( 'path' );
 						var config_path = PATH.join( entity_folder, local_name + '.entity.json' );
 						var config = await Hive.Helpers.FileUtils.ReadJson( config_path );
 						results.push( { Name: skill_name, Text: config.Text || '' } );

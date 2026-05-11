@@ -2,13 +2,8 @@
 const TEST = require( 'node:test' );
 const ASSERT = require( 'node:assert' );
 const PATH = require( 'path' );
+const TestHive = require( './TestHive.js' );
 
-const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const Hive = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Hive.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
-const TEST_HIVE_ROOT = PATH.join( __dirname, '.test-data', 'Data' );
 
 
 //---------------------------------------------------------------------
@@ -19,8 +14,7 @@ TEST.describe( 'Llm Ollama Live Tests', function ()
 	//-----------------------------------------------------------------
 	async function open_hive()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var hive = await Hive.Open( registry, TEST_HIVE_ROOT, TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var hive = await TestHive.Open( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 		return hive;
 	}
 
@@ -31,11 +25,11 @@ TEST.describe( 'Llm Ollama Live Tests', function ()
 		await Hive.InvokeTool( 'Llm.ConfigEntity', {
 			EntityName: 'ollama-chat',
 			Settings: {
-				Description: TEST_CONFIG.LlmModel + ' via Ollama',
-				Platform: TEST_CONFIG.LlmPlatform,
-				ModelName: TEST_CONFIG.LlmModel,
-				ModelTemperature: TEST_CONFIG.LlmTemperature,
-				ContextSize: TEST_CONFIG.LlmContextSize,
+				Description: TestHive.Llm.ModelName + ' via Ollama',
+				Platform: TestHive.Llm.Platform,
+				ModelName: TestHive.Llm.ModelName,
+				ModelTemperature: TestHive.Llm.ModelTemperature,
+				ContextSize: TestHive.Llm.ContextSize,
 				CanEmbed: false,
 			},
 		} );

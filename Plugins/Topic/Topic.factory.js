@@ -8,8 +8,6 @@ and their embedding vectors.
 
 const PATH = require( 'path' );
 const CRYPTO = require( 'crypto' );
-const SqlStoreHelper = require( '../../Helpers/SqlStore.js' );
-const Entities = require( '../../Source/Entities.js' );
 
 
 class Factory
@@ -62,7 +60,7 @@ class Factory
 
 			var db_path = PATH.join( store_folder, EntityName + '.db' );
 
-			var store = new SqlStoreHelper();
+			var store = new Hive.Helpers.SqlStore();
 			store.Open( db_path, { JournalMode: 'wal', BusyTimeout: 5000 } );
 
 			// Ensure the embeddings table exists
@@ -82,7 +80,7 @@ class Factory
 		// Load entity config from disk.
 		Plugin.GetEntityConfig = async function ( Hive, EntityName )
 		{
-			return await Entities.GetEntityConfig( Hive, this, EntityName );
+			return await Hive.GetEntityConfig( this.PluginName, EntityName );
 		};
 
 

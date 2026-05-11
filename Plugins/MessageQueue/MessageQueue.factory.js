@@ -6,8 +6,6 @@ Each entity gets its own SQLite database at .hive/MessageQueue/<EntityName>/mess
 */
 
 const PATH = require( 'path' );
-const SqlStoreHelper = require( '../../Helpers/SqlStore.js' );
-const Strings = require( '../../Helpers/Strings.js' );
 
 class Factory
 {
@@ -40,7 +38,7 @@ class Factory
 			await Hive.Helpers.FileUtils.EnsureFolder( store_folder );
 
 			var db_path = PATH.join( store_folder, 'messages.db' );
-			var store = new SqlStoreHelper();
+			var store = new Hive.Helpers.SqlStore();
 			store.Open( db_path, { JournalMode: 'wal', ForeignKeys: true } );
 
 			Plugin.EnsureTables( store );
@@ -101,12 +99,12 @@ class Factory
 
 		//---------------------------------------------------------------------
 		// Find subscriptions matching a topic.
-		Plugin.FindMatchingSubscriptions = function ( Subscriptions, Topic )
+		Plugin.FindMatchingSubscriptions = function ( Hive, Subscriptions, Topic )
 		{
 			var matches = [];
 			for ( var sub of Subscriptions )
 			{
-				if ( Strings.MatchGlob( Topic, sub.topic_pattern ) )
+				if ( Hive.Helpers.Strings.MatchGlob( Topic, sub.topic_pattern ) )
 				{
 					matches.push( sub );
 				}

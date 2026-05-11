@@ -1,12 +1,8 @@
 
 const TEST = require( 'node:test' );
 const ASSERT = require( 'node:assert' );
-const PATH = require( 'path' );
 
-const HIVEJS_PROJECT_ROOT = PATH.join( __dirname, '..' );
-const Registry = require( PATH.join( HIVEJS_PROJECT_ROOT, 'Source', 'Registry.js' ) );
-const TEST_CONFIG = require( PATH.join( __dirname, '.test-data', 'test-config.json' ) );
-const TEST_REGISTRY_PATH = PATH.join( __dirname, '.test-data', 'Registry' );
+const TestHive = require( './TestHive.js' );
 
 // Registry Tests
 
@@ -17,7 +13,7 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should load a registry from a custom path', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
+		var registry = await TestHive.EnsureSetup();
 
 		ASSERT.ok( registry, 'registry should be created' );
 		ASSERT.ok( registry.Config, 'registry should have a configuration' );
@@ -27,7 +23,7 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should list registry users', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
+		var registry = await TestHive.EnsureSetup();
 		var users = await registry.ListUsers();
 
 		ASSERT.ok( users, 'users should be listed' );
@@ -37,8 +33,8 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should authenticate the testuser with a password', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var login = await registry.Authenticate( TEST_CONFIG.Username, TEST_CONFIG.Password );
+		var registry = await TestHive.EnsureSetup();
+		var login = await registry.Authenticate( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
 
 		ASSERT.ok( login, 'user should be authenticated' );
 		ASSERT.ok( login.Username, 'authenticated user should have a username' );
@@ -50,9 +46,9 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should authenticate the testuser with a token', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
-		var login = await registry.Authenticate( TEST_CONFIG.Username, TEST_CONFIG.Password );
-		login = await registry.Authenticate( TEST_CONFIG.Username, login.Token );
+		var registry = await TestHive.EnsureSetup();
+		var login = await registry.Authenticate( TestHive.TESTUSER_NAME, TestHive.TESTUSER_PASSWORD );
+		login = await registry.Authenticate( TestHive.TESTUSER_NAME, login.Token );
 
 		ASSERT.ok( login, 'user should be authenticated' );
 		ASSERT.ok( login.Username, 'authenticated user should have a username' );
@@ -62,9 +58,21 @@ TEST.describe( 'Registry Tests', function ()
 
 
 	//-----------------------------------------------------------------
+	TEST.it( 'should authenticate the default user without a password', async function ()
+	{
+		var registry = await TestHive.EnsureSetup();
+		var login = await registry.Authenticate( 'default', null );
+
+		ASSERT.ok( login, 'default user should be authenticated' );
+		ASSERT.strictEqual( login.Username, 'default' );
+		ASSERT.ok( login.Role, 'default user should have a role' );
+	} );
+
+
+	//-----------------------------------------------------------------
 	TEST.it( 'should load plugins', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
+		var registry = await TestHive.EnsureSetup();
 		var plugins = await registry.LoadPlugins();
 
 		ASSERT.ok( plugins, 'plugins should be loaded' );
@@ -75,11 +83,11 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should reject authentication with wrong password', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
+		var registry = await TestHive.EnsureSetup();
 
 		await ASSERT.rejects( async function ()
 		{
-			await registry.Authenticate( TEST_CONFIG.Username, 'wrongpassword' );
+			await registry.Authenticate( TestHive.TESTUSER_NAME, 'wrongpassword' );
 		}, /Invalid password/ );
 	} );
 
@@ -87,7 +95,7 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should reject authentication for nonexistent user', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
+		var registry = await TestHive.EnsureSetup();
 
 		await ASSERT.rejects( async function ()
 		{
@@ -99,11 +107,11 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should reject authentication with invalid token', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
+		var registry = await TestHive.EnsureSetup();
 
 		await ASSERT.rejects( async function ()
 		{
-			await registry.Authenticate( TEST_CONFIG.Username, 'eyJinvalidtoken' );
+			await registry.Authenticate( TestHive.TESTUSER_NAME, 'eyJinvalidtoken' );
 		}, /Invalid token/ );
 	} );
 
@@ -111,7 +119,7 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should suppress plugins starting with tilde or underscore', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
+		var registry = await TestHive.EnsureSetup();
 		var plugins = await registry.LoadPlugins();
 
 		for ( var name in plugins )
@@ -126,7 +134,7 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should load plugin tools', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
+		var registry = await TestHive.EnsureSetup();
 		var plugins = await registry.LoadPlugins();
 
 		// System plugin should have tools
@@ -140,7 +148,7 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should generate entity management tools for plugins with EntitySchema', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
+		var registry = await TestHive.EnsureSetup();
 		var plugins = await registry.LoadPlugins();
 
 		// Find a plugin that has EntitySchema
@@ -167,7 +175,7 @@ TEST.describe( 'Registry Tests', function ()
 	//-----------------------------------------------------------------
 	TEST.it( 'should list users with Username, Description, and Role', async function ()
 	{
-		var registry = await Registry.Open( TEST_REGISTRY_PATH );
+		var registry = await TestHive.EnsureSetup();
 		var users = await registry.ListUsers();
 
 		ASSERT.ok( users.length > 0, 'should have at least one user' );

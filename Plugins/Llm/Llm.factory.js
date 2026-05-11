@@ -6,7 +6,6 @@ Each entity represents a single model configuration on a specific platform.
 */
 
 const PATH = require( 'path' );
-const Entities = require( '../../Source/Entities.js' );
 
 
 class Factory
@@ -39,7 +38,7 @@ class Factory
 		// Load entity config from disk.
 		Plugin.GetEntityConfig = async function ( Hive, EntityName )
 		{
-			return await Entities.GetEntityConfig( Hive, this, EntityName );
+			return await Hive.GetEntityConfig( this.PluginName, EntityName );
 		};
 
 
