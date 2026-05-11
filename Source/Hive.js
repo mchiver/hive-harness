@@ -42,6 +42,7 @@ class HiveRuntime
 		this.HiveRoot = HiveRoot;
 		this.DataPath = PATH.join( HiveRoot, '.hive' );
 		this.HarnessVersion = PACKAGE.version;
+		this.IsDevelopment = false;
 
 		this.Events = new EventBus();
 
@@ -68,6 +69,10 @@ class HiveRuntime
 	static async OpenRuntime( Registry, HiveRoot )
 	{
 		var runtime = new HiveRuntime( Registry, HiveRoot );
+
+		// Detect development environment.
+		var development_file = PATH.join( __dirname, '..', '..', '~development' );
+		runtime.IsDevelopment = await FileUtils.FileExists( development_file );
 
 		runtime.Plugins = await runtime.Registry.LoadPlugins();
 
@@ -131,6 +136,7 @@ class Hive
 	get HiveRoot()        { return this.Runtime.HiveRoot; }
 	get DataPath()        { return this.Runtime.DataPath; }
 	get HarnessVersion()  { return this.Runtime.HarnessVersion; }
+	get IsDevelopment()   { return this.Runtime.IsDevelopment; }
 	get Events()          { return this.Runtime.Events; }
 	get Helpers()         { return this.Runtime.Helpers; }
 	get Plugins()         { return this.Runtime.Plugins; }

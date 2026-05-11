@@ -1,19 +1,48 @@
 /*
 	InstallPlugin.js
 ---------------------------------------------------------------------
-Installs a plugin from the catalog into the registry.
-In development mode (project root has ~development file), prefers
-copying from a local sibling repo if one exists.
-Recursively installs missing dependencies declared in Plugin.RequiredPlugins.
+Installs a plugin from the catalog or a local folder into the registry.
+When installing from the catalog, fetches the canonical index.json over
+HTTPS, finds the plugin entry, and clones it using simple-git.
+When installing from a local SourcePath, copies the folder directly.
+Recursively installs missing dependencies declared in
+Plugin.RequiredPlugins (always from the catalog).
 */
 
 const PATH = require( 'path' );
-const CP = require( 'child_process' );
-const UTIL = require( 'util' );
 const FS = require( 'fs' );
+const SimpleGit = require( 'simple-git' );
 
 
-var exec_promise = UTIL.promisify( CP.exec );
+const CATALOG_URL = 'https://raw.githubusercontent.com/mchiver/hive-plugins/refs/heads/main/index.json';
+
+
+//---------------------------------------------------------------------
+// Fetch the remote plugin catalog and return it as an array.
+async function fetch_catalog( Hive )
+{
+	var index_data = await Hive.Helpers.Fetch.Get( CATALOG_URL );
+	if ( !Array.isArray( index_data ) )
+	{
+		throw new Error( 'Plugin catalog returned invalid data.' );
+	}
+	return index_data;
+}
+
+
+//---------------------------------------------------------------------
+// Find a plugin entry by name in the catalog data.
+function find_catalog_entry( CatalogData, PluginName )
+{
+	for ( var index = 0; index < CatalogData.length; index++ )
+	{
+		if ( CatalogData[ index ].PluginName === PluginName )
+		{
+			return CatalogData[ index ];
+		}
+	}
+	return null;
+}
 
 
 //---------------------------------------------------------------------
@@ -24,7 +53,7 @@ function read_factory_required_plugins( SourcePath, PluginName )
 	var factory_path = PATH.join( SourcePath, `${PluginName}.factory.js` );
 	if ( !FS.existsSync( factory_path ) )
 	{
-		return [];
+		throw new Error( `Factory not found: ${factory_path}` );
 	}
 	delete require.cache[ factory_path ];
 	var factory = require( factory_path );
@@ -39,7 +68,7 @@ module.exports = function ( Tool )
 {
 	// Tool Properties
 	Tool.ToolName = 'InstallPlugin';
-	Tool.Description = 'Installs a plugin from the catalog into the registry.';
+	Tool.Description = 'Installs a plugin from the catalog or a local folder into the registry.';
 	Tool.MinimumRole = 'admin';
 
 	// Tool Parameters
@@ -47,6 +76,7 @@ module.exports = function ( Tool )
 		type: 'object',
 		properties: {
 			PluginName: { type: 'string', description: 'The plugin to install.' },
+			SourcePath: { type: 'string', description: 'Optional local folder path to install from.' },
 		},
 		required: [ 'PluginName' ],
 	};
@@ -66,6 +96,7 @@ module.exports = function ( Tool )
 	Tool.Execute = async function ( Hive, Plugin, Arguments )
 	{
 		var plugin_name = Arguments.PluginName;
+		var source_path = Arguments.SourcePath || '';
 		var registry_plugins_folder = PATH.join( Hive.Registry.RegistryPath, 'Plugins' );
 		var target_folder = PATH.join( registry_plugins_folder, plugin_name );
 		var link_path = PATH.join( target_folder, 'plugin.link.json' );
@@ -76,72 +107,51 @@ module.exports = function ( Tool )
 			throw new Error( `Plugin [${plugin_name}] is already installed.` );
 		}
 
-		// Read the plugin index
-		var index_path = require.resolve( '@mchiver/hive-plugins/index.json' );
-		var index_data = [];
-		if ( await Hive.Helpers.FileUtils.FileExists( index_path ) )
-		{
-			index_data = await Hive.Helpers.FileUtils.ReadJson( index_path );
-		}
-
-		var entry = null;
-		for ( var index = 0; index < index_data.length; index++ )
-		{
-			if ( index_data[ index ].PluginName === plugin_name )
-			{
-				entry = index_data[ index ];
-				break;
-			}
-		}
-
-		if ( !entry )
-		{
-			throw new Error( `Plugin [${plugin_name}] not found in the catalog.` );
-		}
-
-		// Resolve source path (local sibling or temp clone)
-		var project_root = PATH.join( __dirname, '..', '..', '..', '..' );
-		var development_file = PATH.join( project_root, '~development' );
-		var is_development = await Hive.Helpers.FileUtils.FileExists( development_file );
-		var source_path = null;
+		var resolved_source_path = null;
 		var needs_cleanup = false;
 
-		if ( is_development )
+		if ( source_path )
 		{
-			var sibling_repo = PATH.join( project_root, '..', 'hive-plugins', `hive-plugin-${plugin_name}.git` );
-			if ( await Hive.Helpers.FileUtils.FolderExists( sibling_repo ) )
+			// Local SourcePath branch
+			if ( !await Hive.Helpers.FileUtils.FolderExists( source_path ) )
 			{
-				source_path = sibling_repo;
+				throw new Error( `SourcePath does not exist: ${source_path}` );
 			}
+			var factory_file = PATH.join( source_path, `${plugin_name}.factory.js` );
+			if ( !await Hive.Helpers.FileUtils.FileExists( factory_file ) )
+			{
+				throw new Error( `Factory not found at SourcePath: ${factory_file}` );
+			}
+			resolved_source_path = source_path;
 		}
-
-		if ( !source_path )
+		else
 		{
+			// Catalog branch — fetch index, find entry, clone
+			var catalog = await fetch_catalog( Hive );
+			var entry = find_catalog_entry( catalog, plugin_name );
+			if ( !entry )
+			{
+				throw new Error( `Plugin [${plugin_name}] not found in the catalog.` );
+			}
 			if ( !entry.PluginUrl )
 			{
 				throw new Error( `Plugin [${plugin_name}] has no PluginUrl to clone from.` );
 			}
-			// Clone to a temporary directory so we can inspect the factory
+
 			var temp_dir = PATH.join( Hive.Registry.RegistryPath, '.tmp', `install-${plugin_name}-${Date.now()}` );
 			await Hive.Helpers.FileUtils.EnsureFolder( temp_dir );
-			var clone_command = `git clone "${entry.PluginUrl}" "${temp_dir}"`;
-			var clone_result = await exec_promise( clone_command );
-			if ( clone_result.stderr && clone_result.stderr.length > 0 )
-			{
-				if ( !await Hive.Helpers.FileUtils.FolderExists( temp_dir ) )
-				{
-					throw new Error( `Failed to clone plugin [${plugin_name}]: ${clone_result.stderr}` );
-				}
-			}
-			source_path = temp_dir;
+
+			await SimpleGit().clone( entry.PluginUrl, temp_dir, [ '--depth', '1' ] );
+
+			resolved_source_path = temp_dir;
 			needs_cleanup = true;
 		}
 
 		// Read dependencies from the factory
-		var required_plugins = read_factory_required_plugins( source_path, plugin_name );
+		var required_plugins = read_factory_required_plugins( resolved_source_path, plugin_name );
 		var installed_dependencies = [];
 
-		// Recursively install missing dependencies
+		// Recursively install missing dependencies (always from catalog)
 		for ( var dep_index = 0; dep_index < required_plugins.length; dep_index++ )
 		{
 			var dep_name = required_plugins[ dep_index ];
@@ -149,22 +159,25 @@ module.exports = function ( Tool )
 			if ( !await Hive.Helpers.FileUtils.FileExists( dep_link ) )
 			{
 				var dep_result = await Tool.Execute( Hive, Plugin, { PluginName: dep_name } );
-				if ( dep_result.Success && dep_result.InstalledDependencies )
+				if ( dep_result.Success )
 				{
 					installed_dependencies.push( dep_name );
-					installed_dependencies = installed_dependencies.concat( dep_result.InstalledDependencies );
+					if ( Array.isArray( dep_result.InstalledDependencies ) )
+					{
+						installed_dependencies = installed_dependencies.concat( dep_result.InstalledDependencies );
+					}
 				}
 			}
 		}
 
-		// Copy from source to target
+		// Copy source into the registry
 		await Hive.Helpers.FileUtils.EnsureFolder( target_folder );
-		await Hive.Helpers.FileUtils.CopyBranch( source_path, target_folder );
+		await Hive.Helpers.FileUtils.CopyBranch( resolved_source_path, target_folder );
 
-		// Clean up temp clone if we used one
+		// Clean up temporary clone
 		if ( needs_cleanup )
 		{
-			await Hive.Helpers.FileUtils.DeleteFolder( source_path, true );
+			await Hive.Helpers.FileUtils.DeleteFolder( resolved_source_path, true );
 		}
 
 		// Create plugin.link.json

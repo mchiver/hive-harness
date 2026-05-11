@@ -1,12 +1,13 @@
 /*
 	ListAvailablePlugins.js
 ---------------------------------------------------------------------
-Reads the plugin index from the canonical plugin catalog and returns
-all known plugins, marking which ones are already installed in the
-registry.
+Reads the plugin index from the canonical plugin catalog (fetched over
+HTTPS) and returns all known plugins, marking which ones are already
+installed in the registry.
 */
 
-const PATH = require( 'path' );
+
+const CATALOG_URL = 'https://raw.githubusercontent.com/mchiver/hive-plugins/refs/heads/main/index.json';
 
 
 module.exports = function ( Tool )
@@ -45,11 +46,10 @@ module.exports = function ( Tool )
 	// Tool Execution
 	Tool.Execute = async function ( Hive, Plugin, Arguments )
 	{
-		var index_path = require.resolve( '@mchiver/hive-plugins/index.json' );
-		var index_data = [];
-		if ( await Hive.Helpers.FileUtils.FileExists( index_path ) )
+		var index_data = await Hive.Helpers.Fetch.Get( CATALOG_URL );
+		if ( !Array.isArray( index_data ) )
 		{
-			index_data = await Hive.Helpers.FileUtils.ReadJson( index_path );
+			index_data = [];
 		}
 
 		var plugins = [];

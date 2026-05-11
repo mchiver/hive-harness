@@ -46,7 +46,6 @@
 		"bench": "node Utilities/ModelBench/modelbench.js"
 	},
 	"dependencies": {
-		"@mchiver/hive-plugins": "file:../hive-plugins/hive-plugins.git",
 		"bcrypt": "^6.0.0",
 		"better-sqlite3": "^12.8.0",
 		"blessed": "^0.1.81",
@@ -55,7 +54,8 @@
 		"json5": "^2.2.3",
 		"jsonwebtoken": "^9.0.2",
 		"minimist": "^1.2.8",
-		"moniker": "^0.1.2"
+		"moniker": "^0.1.2",
+		"simple-git": "^3.27.0"
 	},
 	"engines": {
 		"node": ">=20.0.0"
