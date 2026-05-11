@@ -46,6 +46,7 @@
 		"bench": "node Utilities/ModelBench/modelbench.js"
 	},
 	"dependencies": {
+		"@mchiver/hive-plugins": "file:../hive-plugins/hive-plugins.git",
 		"bcrypt": "^6.0.0",
 		"better-sqlite3": "^12.8.0",
 		"blessed": "^0.1.81",

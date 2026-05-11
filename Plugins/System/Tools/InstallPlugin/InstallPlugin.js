@@ -77,7 +77,7 @@ module.exports = function ( Tool )
 		}
 
 		// Read the plugin index
-		var index_path = PATH.join( __dirname, '..', '..', '..', '..', '..', 'hive-plugins', 'hive-plugins.git', 'index.json' );
+		var index_path = require.resolve( '@mchiver/hive-plugins/index.json' );
 		var index_data = [];
 		if ( await Hive.Helpers.FileUtils.FileExists( index_path ) )
 		{
